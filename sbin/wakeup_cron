@@ -1,0 +1,28 @@
+#!/usr/bin/perl -w
+#
+
+use strict;
+#use Getopt::Long;
+
+use WakeUpManager::Cron;
+
+my $opt_config_file = "/etc/wum/wum.conf";
+my $opt_start_interval = undef;
+my $opt_help = undef;
+
+#Getopt::Long::Configure ("bundling");
+#GetOptions (    "config|c=s"	=> \$opt_config_file,
+#		"interval|i=i"	=> \$opt_start_interval,
+#		"help|h"	=> \$opt_help
+#);
+#
+#if ($opt_help || ! defined $opt_start_interval) {
+#	print STDERR "Usage: wakeup_cron -i start_interval\n";
+#	print STDERR "\t[--config file_name | -c]\n";
+#	print STDERR "\t[--help | -h]\n";
+#}
+
+my $cron_d =  WakeUpManager::Cron->new (config_file => $opt_config_file,
+                                        start_interval => $opt_start_interval);
+
+$cron_d->wake_them_up ();

@@ -1,0 +1,91 @@
+#!/usr/bin/perl -WT
+#
+# Maximilian Wilhelm <max@rfc2324.org>
+#  --  Fri May 30 05:05:32 2008
+#
+
+use strict;
+use CGI;
+
+use WakeUpManager::Common::Utils qw(:timetable);
+use WakeUpManager::Config;
+use WakeUpManager::DB::HostDB;
+use WakeUpManager::WWW::GraphLib;
+
+
+#
+# CGI
+my $cgi = CGI->new ();
+print $cgi->header ('image/png');
+
+# Get host_id
+my $host_id = $cgi->param ("host_id");
+if (! $host_id) {
+	print "<span class=\"error\">Error: No host_id given.</span>\n";
+	print STDERR "Called without 'host_id'.\n";
+	exit 1;
+}
+
+# Try to get users preference for timetable
+my $orientation = $cgi->cookie('timetable_orientation');
+if (! defined $orientation || ($orientation ne 'horizontal' && $orientation ne 'vertical')) {
+	$orientation = 'horizontal';
+}
+
+#
+# DB connection
+my $wum_config = WakeUpManager::Config->new (config_file => "/etc/wum/wum.conf");
+my $host_db = WakeUpManager::DB::HostDB->new (dbi_param => $wum_config->get_dbi_param ("HostDB"));
+
+if (! $host_db) {
+        print "<span class=\"error\">Error: No database connection.</span>\n";
+	print STDERR "Error: No database connection.\n";
+}
+
+my $gl = WakeUpManager::WWW::GraphLib->new ();
+
+my $user = $ENV{'REMOTE_USER'};
+$user =~ s/@.*$//;
+
+#
+# (Input) validation made easy, as we have to return an image
+# and it's therefore not that simple to push out useful error
+# message to the user.
+# Nearby the script calling us shouldn't call us in case of
+# a detected error.
+
+#
+# Validate input
+if (! $host_db->is_valid_host ($host_id)) {
+	exit 0;
+}
+
+#
+# Check if user is allow to show host config
+if (! $host_db->user_can_read_host_config ($user, $host_id)) {
+	exit 0;
+}
+
+#
+# Query DB for boot times
+my $boot_times = $host_db->get_times_of_host ($host_id);
+if (! $boot_times) {
+	exit 0;
+}
+
+if (ref ($boot_times) ne 'HASH') {
+	exit 1;
+}
+
+if (! keys %{$boot_times}) {
+	exit 0;
+}
+
+my $times_list = WakeUpManager::Common::Utils::get_times_list ($boot_times);
+
+# Explicit check for 'vertical' and use horizontal as default for no or carppy input
+if ($orientation eq 'vertical') {
+	$gl->print_timetable_vertical_png ($times_list);
+} else {
+	$gl->print_timetable_horizontal_png ($times_list);
+}

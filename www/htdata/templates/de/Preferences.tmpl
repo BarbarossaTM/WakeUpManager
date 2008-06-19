@@ -1,0 +1,32 @@
+	 <p>
+	  Es ist m&ouml;glich, das Aussehen mancher Teil des Wake Up Manager
+	  Web Interfaces nach Ihren W&uuml;nschen zu konfigurieren.
+	 </p>
+
+
+	 <form name="Preferences" action="" method="POST">
+	  <p>
+	   W&auml;hlen Sie die gew&uuml;nschten Optionen aus und klicken Sie auf &quot;Konfiguration speichern&quot; <br>
+	   (Um diese Funktionalit&auml;t nutzen zu k&ouml;nnen, m&uuml;ssen Cookies in Ihrem Browser aktiviert sein.)
+	  </p>
+
+	  <div class="box">
+	   <div class="box_head">&raquo; Wake Up Manager Konfiguration</div>
+	   <div class="box_content">
+	     <b>Ausrichtung der Bootzeitdarstellung</b>
+	     <div class="three_em">
+	      <TMPL_VAR timetable_orientation_radio>
+<!--	      <input type="radio" name="timetable_orientation" value="horizontal"> Horizontal <br>
+	      <input type="radio" name="timetable_orientation" value="vertical"> Vertikal <br>
+//-->
+	     </div>
+
+	     <br>
+	     <input type="button" value='Konfiguration speichern' onClick="savePreferences();">
+	   </div>
+	  </div>
+	  <!-- box end //-->
+	 </form>
+
+	 <div id='result'>
+	 </div>

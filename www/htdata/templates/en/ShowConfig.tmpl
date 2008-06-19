@@ -1,0 +1,55 @@
+	 <p>
+	  Wake Up Manager offers the possibilty to boot and shutdown hosts based on a timetable.
+	 </p>
+
+	 <p>
+	  To view the timetable of a host, choose the desired host from the list and click
+	  on the &quot;Show timetable&quot; button.
+	 </p>
+
+	<!-- If the user has the right to read the config of least on host //-->
+	<TMPL_IF host_loop>
+	 <form name="show_config_form" action="" method="POST">
+
+	  <p>
+	   Choose the host, which timetable should be shown.
+	  </p>
+
+	  <div class="box">
+	   <div class="box_head">&raquo; Show timetable</div>
+	   <div class="box_content">
+
+	    <div id='host_select'>
+	     <select name="host">
+	      <TMPL_LOOP NAME="host_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	      </TMPL_LOOP>
+	     </select>
+	    </div>
+
+	    <!-- Nur Rechner der Gruppe <Hostgroup> anzeigen. //-->
+	    <TMPL_IF hostgroup_loop>
+	     <p class='hostgroup_list'>
+	      Only show hosts of group
+
+	      <select name="group" onChange="updateHostlist();">
+	       <TMPL_LOOP NAME="hostgroup_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	       </TMPL_LOOP>
+	      </select>
+	     </p>
+	    </TMPL_IF>
+
+	    <input type="button" value='Show timetable' onClick="showConfig();">
+	   </div>
+	  </div>
+	  <!-- box end //-->
+	 </form>
+
+	 <div id='result'>
+	 </div>
+
+	<!-- Ok, the user does NOT have the right to read the config of any host //-->
+	<TMPL_ELSE>
+	 <p>
+	  You are not allowed to view the timetable of a host.
+	 </p>
+	</TMPL_IF>

@@ -1,0 +1,57 @@
+
+	 <p>
+	  Wake Up Manager offers the functionality to boot a host on demand
+	  regardless what has been configured.
+	 </p>
+
+	 <p>
+	  To boot up a host over the network now choose the desired host from the list
+	  and click the &quot;Boot host&quot; button.
+	 </p>
+
+	<!-- If the user has the right to boot at least on host //-->
+	<TMPL_IF host_loop>
+	 <form name="boot_host" action="" method="POST">
+
+	  <p>
+	   Choose the host to be started and click on the &quot;Boot host&quot; button.
+	  </p>
+
+	  <div class="box">
+	   <div class="box_head">&raquo; Boot host</div>
+	   <div class="box_content">
+
+	    <div id='host_select'>
+	     <select name="host">
+	      <TMPL_LOOP NAME="host_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	      </TMPL_LOOP>
+	     </select>
+	    </div>
+
+	    <!-- Nur Rechner der Gruppe <Hostgroup> anzeigen. //-->
+	    <TMPL_IF hostgroup_loop>
+	     <p class='hostgroup_list'>
+	      Only show hosts of group
+
+	      <select name="group" onChange="updateHostlist();">
+	       <TMPL_LOOP NAME="hostgroup_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	       </TMPL_LOOP>
+	      </select>
+	     </p>
+	    </TMPL_IF>
+
+	    <input type="button" value='Boot host' onClick="bootHost();">
+	   </div>
+	  </div>
+	  <!-- box end //-->
+	 </form>
+
+	 <div id='result'>
+	 </div>
+
+	<!-- Ok, the user does NOT have the right to boot any host //-->
+	<TMPL_ELSE>
+	 <p>
+	  You are not allowed to boot a host.
+	 </p>
+	</TMPL_IF>

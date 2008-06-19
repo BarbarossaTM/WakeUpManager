@@ -1,0 +1,44 @@
+#!/usr/bin/perl -WT
+#
+# The WakeUpManager Agent
+#
+# (C) 2008 Maximilian Wilhelm <max@rfc2324.org>
+#
+
+use strict;
+use Carp;
+
+use WakeUpManager::Agent::Daemon;
+
+use Frontier::Daemon 1.01;
+
+my $daemon_port = 2342;
+
+#
+# Fire up Agent
+my $agent = WakeUpManager::Agent::Daemon->new (configfile => "/etc/wum/agent.conf", verbose => 1);
+
+
+#
+# Create RPC server using transport HTTP on port $daemon_port
+# allowing requests only from IPs in allowed_clients list
+# dispatching request using methods specified int $agent_wrapper
+my $rpc_server = Frontier::Daemon::->new (
+	LocalPort => $daemon_port,
+	allowed_clients => $agent->get_allowed_clients (),
+	methods => $agent->get_methods (),
+	syslog => {
+		name => "wakeup-agent",
+		prefix => "[RPC] ",
+		facility => "daemon",
+		log_level => "info",
+		log_request_path => 0,
+	},
+	handle_perl_objects => 1,
+
+	no_autolisten => 1,
+);
+
+#
+# Start listening for request
+$rpc_server->listen ();

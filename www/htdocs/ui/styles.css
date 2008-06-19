@@ -1,0 +1,90 @@
+.left { text-align: left; }
+.center { text-align: center; }
+.right { text-align: right; }
+
+/* Links */
+a { text-decoration: none; color:#0000FF; }
+a:link { text-decoration: none; color:#0000FF;  }
+a:active { text-decoration: underline; color:#0000FF; background: #cccccc; }
+a:visited { text-decoration: none; color:#0000FF }
+a:hover { text-decoration: underline; color:#0000FF; background: #cccccc; }
+
+img{ border: 0; }
+.valid { width:88px; height:31px; }
+
+
+.header {
+	text-align: center;
+	color: #000080;
+	height: 75px;
+}
+
+.menu{
+	position: fixed;
+	top:  160px;
+	left: 0px;
+/*	width: 210px; */
+	width: 18%;
+
+	margin-top: 23px;
+
+	padding-bottom: 42px;
+
+	border-right: 2px solid #000080;
+}
+
+.awards {
+	position: fixed;
+	top: 96.5%;
+
+	font-style: oblique;
+}
+
+.content {
+	position: relative;
+	top: 75px;
+/*	left: 223px; */
+/*	width:675px;		*/
+	margin-left: 19%;
+	margin-right: 13%;
+/*	padding-bottom: 242px; */
+	margin-bottom: 42px;
+}
+
+.three_em {
+	margin-top: 0.42em;
+	margin-left: 1em;
+}
+
+.error {
+	color: #FF0000;
+	font-weight: bold;
+}
+
+/*
+ * Nice boxes with heading and content part
+ */
+.box {
+	border: 1px solid #ddd;
+	margin: 0 10px 20px 0px;
+}
+
+.box_head {
+	margin: 0;
+	padding: 3px;
+	margin-bottom: 10px;
+	background-color: #f3f3f3;
+
+	color: #003a6f;
+	font-weight: bold;
+}
+
+.box_content {
+	padding: 7px 0 7px 7px;
+}
+
+
+/* Print hostgroup list a bit smaller */
+.hostgroup_list {
+	font-size: smaller;
+}

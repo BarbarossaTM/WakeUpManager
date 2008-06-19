@@ -1,0 +1,64 @@
+#!/usr/bin/perl -WT
+#
+# Maximilian Wilhelm <max@rfc2324.org>
+#  --  Fri May 30 05:05:32 2008
+#
+
+use strict;
+
+use WakeUpManager::Config;
+use WakeUpManager::DB::HostDB;
+use WakeUpManager::WWW;
+use WakeUpManager::WWW::Utils;
+
+#
+# WWW lib
+my $www = WakeUpManager::WWW->new (contentless_mode => 1);
+if (! $www) {
+	print "Content-Type: text/html\n\nAn internal error occured. Please contact your system administrator.\n";
+}
+my $params = $www->{params};
+
+my $hg_id = $params->get_http_param ('hg_id');
+my $right = $params->get_http_param ('right');
+my $user = $www->{params}->get_auth_info ()->{user};
+my $lang = $www->{params}->get_lang ();
+
+if (! $hg_id || ! $right) {
+	print "<span class=\"error\">No 'hg_id' or no 'right' parameter given.</span>\n";
+	exit 0;
+}
+
+#
+# DB connection
+my $wum_config = WakeUpManager::Config->new (config_file => "/etc/wum/wum.conf");
+my $host_db = WakeUpManager::DB::HostDB->new (dbi_param => $wum_config->get_dbi_param ("HostDB"));
+if (! $host_db) {
+	print "<span class=\"error\">No connection to database. Please contact your system administrator</span>\n";
+	exit 0;
+}
+
+my $hosts;
+my $hg_name = $host_db->get_hostgroup_name ($hg_id) || "#$hg_id";
+if ($hg_name && $hg_name eq 'ALL') {
+	$hosts = $host_db->_hosts_user_has_right_on ($user, $right);
+} else {
+	$hosts = $host_db->_hosts_of_hostgroup_user_has_right_on ($hg_id, $user, $right);
+}
+
+if (keys %{$hosts} > 0) {
+	print "<select name='host'>\n";
+
+	my $hosts_list = WakeUpManager::WWW::Utils->gen_pretty_host_select ($hosts);
+	foreach my $item (@{$hosts_list}) {
+		print " <option value='$item->{key}'>$item->{val}</option>\n";
+	}
+
+	print "</select>\n";
+} else {
+	if ($lang eq 'de') {
+		print "Es sind keine Rechner in der Gruppe <i>$hg_name</i> bekannt oder sie haben nicht die ben&ouml;tigten Rechte.\n";
+	} else {
+		print "There are no hosts in group <i>$hg_name</i> or you are not allowed to do the requested action to them.\n";
+	}
+}

@@ -1,0 +1,82 @@
+#!/usr/bin/perl -WT
+#
+# Maximilian Wilhelm <max@rfc2324.org>
+#  --  Fri, 06 Jun 2008 16:27:22 +0200
+#
+
+use strict;
+
+use WakeUpManager::Cmd::GetHostInfo;
+use WakeUpManager::RPC::Wrapper;
+use WakeUpManager::WWW;
+
+use Frontier::Responder;
+use Net::CIDR;
+use Socket;
+
+#
+# Error handling via 'die' to generate code 500 (Internal Server Error)
+sub error ($) {
+	my $msg = shift;
+
+	chomp $msg;
+
+	print "Content-Type: text/plain\n\n";
+	print "$msg\n";
+	die "$msg\n";
+	exit 0;
+}
+
+my $www = WakeUpManager::WWW->new (contentless_mode => 1, no_header => 1);
+if (! $www) {
+	error "Content-Type: text/plain\n\nAn internal error occured. Please contact your system administrator.\n";
+}
+
+my $params = $www->{params};
+# Who does want what?
+my $request_method = $params->get_env_var ('REQUEST_METHOD');
+my $remote_addr = $params->get_env_var ('REMOTE_ADDR');
+if (! $remote_addr || ! Net::CIDR::cidrvalidate ($remote_addr)) {
+	error "Internal error #1. Please contact your system administrator.\n";
+}
+
+# Get FQDN of client, talking to us.
+my $iaddr = inet_aton ($remote_addr);
+my ($hostname, $aliases, $addrtype, $length, @addrs) = gethostbyaddr ($iaddr, AF_INET);
+if (! $hostname) {
+	error "Internal DNS error: Could not get hostname for IP.\n";
+}
+
+
+my $boot_host_cmd = WakeUpManager::Cmd::GetHostInfo->new (preset_hostname => $hostname);
+if (! $boot_host_cmd) {
+	error "Content-Type: text/plain\n\nAn internal error occured. Please contact your system administrator.\n";
+}
+
+my $rpc_wrapper_boot_host = WakeUpManager::RPC::Wrapper->new (wrapper_obj => $boot_host_cmd);
+if (! $rpc_wrapper_boot_host) {
+	error "Content-Type: text/plain\n\nAn internal error occured. Please contact your system administrator.\n";
+}
+
+
+# Fire up RPC2 serving stuff
+my $rpc2 = Frontier::RPC2->new (handle_perl_objects => 1);
+if (! $rpc2) {
+	error "An internal error occured. Please contact your system administrator.\n";
+}
+
+# Only accept POST request
+if (! defined $request_method || $request_method ne 'POST') {
+	error "Refusing to serve a request using invalid method.";
+}
+
+# Check for valid content lenght in HTTP request.
+my $content_length = $params->get_env_var ('CONTENT_LENGTH');
+my $POST = $www->_get_POST_data ();
+if (length ($POST) != $content_length) {
+	error "Content length does not fit lenght of request...";
+}
+
+# Ok, if we're still alive, serve request
+print "Content-Type: text/xml\n\n";
+print $rpc2->serve ($POST, $rpc_wrapper_boot_host->get_methods ());

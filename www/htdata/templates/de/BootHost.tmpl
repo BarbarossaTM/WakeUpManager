@@ -1,0 +1,67 @@
+
+	 <p>
+	  Der WakeUpManager bietet die M&ouml;glichkeit, einen Rechner bei Bedarf
+	  unabh&auml;ngig von konfigurierten Zeiten zu starten.
+	 </p>
+
+	 <p>
+	  Um jetzt einen Rechner &uuml;ber das Netzwerk zu starten, w&auml;hlen Sie
+	  den gew&uuml;nschten PC aus der Liste aus und klicken Sie auf "Rechner starten."
+	 </p>
+
+<!--
+	 <p>
+	  Die Rechnerliste zeigt alle Rechner, die Sie &uuml;ber das Netz starten d&uuml;rfen. <br>
+	  Um die Liste auf ein eine bestimmt Gruppe von Rechnern (z.B. die PCs eines Pools
+	  oder Ihrer Arbeitsgruppe) zu beschr&auml;nken, w&auml;len Sie ein Gruppe aus. <br>
+	 </p>
+//-->
+
+	<!-- If the user has the right to boot at least on host //-->
+	<TMPL_IF host_loop>
+	 <form name="boot_host" action="" method="POST">
+
+	  <p>
+	   W&auml;hlen Sie den Rechner, der gestartet werden soll und klicken Sie auf &quot;Rechner starten&quot;.
+	  </p>
+
+	  <div class="box">
+	   <div class="box_head">&raquo; Rechner starten</div>
+	   <div class="box_content">
+
+	    <div id='host_select'>
+	     <select name="host">
+	      <TMPL_LOOP NAME="host_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	      </TMPL_LOOP>
+	     </select>
+	    </div>
+
+	    <!-- Nur Rechner der Gruppe <Hostgroup> anzeigen. //-->
+	    <TMPL_IF hostgroup_loop>
+	     <p class='hostgroup_list'>
+	      Nur Rechner der Gruppe
+
+	      <select name="group" onChange="updateHostlist();">
+	       <TMPL_LOOP NAME="hostgroup_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	       </TMPL_LOOP>
+	      </select>
+
+	      anzeigen.
+	     </p>
+	    </TMPL_IF>
+
+	    <input type="button" value='Rechner starten' onClick="bootHost();">
+	   </div>
+	  </div>
+	  <!-- box end //-->
+	 </form>
+
+	 <div id='result'>
+	 </div>
+
+	<!-- Ok, the user does NOT have the right to boot any host //-->
+	<TMPL_ELSE>
+	 <p>
+	  Sie haben nicht das Recht einen Rechner zu starten.
+	 </p>
+	</TMPL_IF>

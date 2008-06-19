@@ -1,0 +1,295 @@
+#!/usr/bin/perl -WT
+#
+# Maximilian Wilhelm <max@rfc2324.org>
+#  --  Mon 09 Jun 2008 09:20:13 PM CEST
+#
+
+use strict;
+use Carp;
+
+use WakeUpManager::Common::Logging;
+use WakeUpManager::Common::Utils qw(:timetable :state);
+use WakeUpManager::RPC::Utils;
+use WakeUpManager::Config;
+
+use Frontier::Client 1.01;
+
+log_init ("wum_shutdown", "user");
+
+#
+# Satisfy -T switch
+$ENV{'PATH'} = "/bin:/usr/bin/";
+
+################################################################################
+#				Configuration				       #
+################################################################################
+
+# Default time in minutes to wait after machine has been booted before
+# shutting down the PC.
+my $boot_grace_time = 15;
+
+# Default time window to consider in timetable to check for eventual
+# boot event following a potential current shutdown event.
+my $time_window = 15;
+
+# List of processes (WITHOUT args) to be ignored when checking the
+# process list for user processes which prevent us from shutting down
+# the machine.
+my @ignore_process = (
+	# Standard Unix services
+	'atd', 'cron',
+	'syslogd', 'klogd',
+	'getty',
+	'ntpd',
+	'nscd',
+	'sshd', 'ssh-agent',
+
+	# Network file systems
+	'portmap',
+	'automount', 'rpc.statd',
+	'afsd', # AFS Kernel processes will be ignored automatically
+
+	# Automagic stuff
+	'udevd',
+	'dbus-daemon',
+	'hald', 'hald-runner', 'hald-addon-acpi', 'hald-addon-keyb', 'hald-addon-stor', 'hald-addon-usb-',
+	'ivman',
+
+	# Supervision
+	'smartd',
+	'nrpe',
+
+	# Virtualization
+	'uml_switch',
+
+	# Graphical stuff ...
+	'gpm',
+	'Xorg',
+	'kdm', 'kdm_greet', 'ksmserver', 'kwrapper',
+	'gdm',
+
+	# ... and rat-tail
+	'artsd',
+	'gam_server',
+	'ifdhandler',
+	'dcopserver',
+);
+
+# Read additional configuration from file # {{{
+my $config_file = "/etc/wum/wum.conf";
+
+#
+# Read config file
+my $config = WakeUpManager::Config->new (config_file => $config_file);
+if (! $config) {
+	log_msg ("err", "Failed to read configuraton from \"$config_file\".\n");
+	print STDERR "Error: Failed to read configuraton from \"$config_file\".\n";
+	exit 1;
+}
+
+my $client_opts =  $config->get_client_opts ();
+if (! $client_opts) {
+	log_msg ("err", "Could not get 'CLIENT' configuration from \"$config_file\".\n");
+	print STDERR "Error: Could not get 'CLIENT' configuration from \"$config_file\".\n";
+	exit 2;
+}
+
+# Get URL of RPC connection for UI
+if (! $client_opts->{RPC_URL}) {
+	log_msg ("err", "RPC_URL no set in config file \"$config_file\".\n");
+	print STDERR "Error: RPC_URL no set in config file \"$config_file\".\n";
+	exit 2;
+}
+
+# Check for additional / superseeding 'ignore_proceses' list in configuration # {{{
+if ($client_opts->{ignore_processes}) {
+	if (ref ($client_opts->{ignore_processes}) ne 'ARRAY') {
+		log_msg ("err", "Invalid value for 'ignore_processes' option in 'CLIENT' section.\nExpecting a reference to a list.\n");
+		print STDERR "Error: Invalid value for 'ignore_processes' option in 'CLIENT' section.\n";
+		print STDERR "       Expecting a reference to a list.\n";
+		exit 2;
+	}
+
+	if ($client_opts->{drop_default_ignore_processes}) {
+		@ignore_process = @{$client_opts->{ignore_processes}};
+	} else {
+		push @ignore_process, @{$client_opts->{ignore_processes}};
+	}
+} # }}}
+
+if ($client_opts->{boot_grace_time}) {
+	$boot_grace_time = $client_opts->{boot_grace_time};
+}
+
+if ($client_opts->{time_window}) {
+	$boot_grace_time = $client_opts->{time_window};
+}
+#}}}
+
+
+################################################################################
+#			Check for shutdown criteria			       #
+################################################################################
+
+#
+# 0. Should this host be shut down by WUM?
+if (! $client_opts->{do_shutdown}) {
+	log_msg ("info", "No trying to shut down this host as you requested.\n");
+	exit 0;
+}
+
+#
+# 1. If host has been booted within the last 15 minutes, don't shutdown
+
+# Read first (and only) line from /proc/uptime
+if (! open (PROC_UPTIME, '<', '/proc/uptime')) {
+	log_msg ("err", "Cannot open \"/proc/uptime\" for reading: $!\n");
+	die "Cannot open \"/proc/uptime\" for reading: $!\n";
+}
+my $proc_uptime = <PROC_UPTIME>;
+close (PROC_UPTIME);
+my $uptime_minutes = $proc_uptime;
+   $uptime_minutes =~ s/\.[0-9. ]+$//;
+   $uptime_minutes /= 60;
+
+#my $uptime_string =  `uptime`;
+#   $uptime_string =~ s/.*up[[:space:]]+([0-9:]+),.*/$1/;
+#my @uptime = split (":", $uptime_string);
+#my $uptime_minutes = $uptime[0] * 60 + $uptime[1];
+
+if ($uptime_minutes <= $boot_grace_time) {
+	log_msg ("info", "Machine is up for less than $boot_grace_time minutes. Staying cool.\n");
+	exit 0;
+}
+
+
+#
+# 2. If someone is logged in interactivly, don't shutdown
+my $user_count = `who -u | wc -l`;
+chomp $user_count;
+if ($user_count > 0) {
+	if ($user_count == 1) {
+		log_msg ("info", "There is $user_count interactive login. Staying cool.\n");
+	} else {
+		log_msg ("info", "There are $user_count interactive logins. Staying cool.\n");
+	}
+	exit 0;
+}
+
+
+#
+# 3. Check for running user processes which are not in the ignore_process
+# list and don't shutdown if we found one.
+
+# First prepare hash for easier testing
+my $ignore_process_hash;
+foreach my $item (@ignore_process) {
+	$ignore_process_hash->{$item} = 1;
+}
+
+# Get UID, PID, ParantPID, Command name, Cmd + args
+if (! open (PS, "-|", "ps h -eo uid,pid,ppid,comm,args")) {
+	log_msg ("err", "Could not read 'ps' output: $!\n");
+	die "Could not read 'ps' output: $!\n";;
+}
+
+while (my $line = <PS>) {
+	chomp $line;
+
+	# Drop any leading spaces
+	$line =~ s/^[[:space:]]*//;
+
+	# Split line into 5 parts at space boundaries
+	my ($uid, $pid, $ppid, $cmd, $cmd_with_args) = split (/[[:space:]]+/, $line, 5);;
+
+	# Skip Kernel threads
+	if ($cmd_with_args =~ m/^(init .+|\[.*\])$/) {
+		next;
+	}
+
+	# Skip this process, the parant process (probalby sh)
+	# and processes we spawned (ps)
+	if ($pid == $$ || $pid == getppid () || $ppid == $$) {
+		next;
+	}
+
+	# Skip every processes which is listed in the ignore list
+	if ($ignore_process_hash->{$cmd}) {
+		next;
+	}
+
+	log_msg ("info", "Found processes which is not in ignore list: \"$cmd\". Staying cool.\n");
+	exit 0;
+}
+close (PS);
+
+
+#
+# 4. Ask the WUM server for host state and timetable
+#    If the host is inactive, don't shutdown
+#    If the host is in an 'up' timeframe, don't shutdown
+
+
+# Setup RPC connection
+my $rpc_h = Frontier::Client->new (
+	url => "$client_opts->{RPC_URL}/rpc/client",
+	handle_perl_objects => 1);
+if (! $rpc_h) {
+	log_msg ("err", "Could not connect to server.\n");
+	print STDERR "Error: Could not connect to server.\n";
+	exit 3;
+}
+
+# eval'uate the agent call as it will 'die' on error...
+my $result = undef;
+eval {
+	$result = $rpc_h->call ('wakeUpManager.cmd.getHostInfo');
+};
+
+# Check the result of the RPC call
+if (! defined $result || ! rpc_result_ok ($result)) {
+	log_msg ("err", "Did not get (valid) result from server.\n");
+	if (defined $result) {
+		log_msg ("err", "Server reported: " . rpc_get_errmsg ($result) . "\n");
+		print STDERR "Server reported: " . rpc_get_errmsg ($result) . "\n";
+	}
+	exit 1;
+} else {
+	my $rpc_value = rpc_get_value ($result);
+	# In case of invalid data no change to take a decision
+	if (ref ($rpc_value) ne 'HASH' ||
+	    ref ($rpc_value->{timetable} ne 'HASH') ||
+	    ref ($rpc_value->{host_state}) ne 'HASH') {
+		log_msg ("err", "Got invalid result from server.\n");
+		print STDERR "Got invalid result from server.\n";
+		exit 2;
+	}
+
+	# If host is not active, no reboot via WUM at all
+	if (! $rpc_value->{host_state}->{shutdown_host}) {
+		log_msg ("info", "Host should not be shut down. Staying cool.\n");
+		exit 1;
+	}
+
+	# If there is no entry in the timetable, there's nothing to do for us
+	if (keys %{$rpc_value->{timetable}} == 0) {
+		log_msg ("info", "No entry in timetable. Staying cool.\n");
+		exit 1;
+	}
+
+	my @localtime = localtime (time);
+	my ($dow, $hour, $minutes) = ($localtime[6], $localtime[2], $localtime[1]);
+	my $day = WakeUpManager::Common::Utils::dow_to_day ($dow);
+	if (! $day) {
+		log_msg ("err", "Internal error: Could not get day name...\n");
+		exit 2;
+	}
+
+	my $supposed_state = get_host_state ($rpc_value->{timetable});
+	if ($supposed_state eq 'shutdown') {
+		log_msg ("info", "Machine should be shut down. Good night.\n");
+		system ("/sbin/poweroff");
+	}
+}
+
+# vim:foldmethod=marker

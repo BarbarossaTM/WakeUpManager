@@ -1,0 +1,98 @@
+#!/usr/bin/perl -WT
+#
+# Maximilian Wilhelm <max@rfc2324.org>
+#  --  Fri 06 Jun 2008 05:03:31 PM CEST
+#
+
+use strict;
+use Carp;
+
+use WakeUpManager::RPC::Utils;
+use WakeUpManager::Config;
+
+use Frontier::Client 1.01;
+use Getopt::Long;
+use Socket;
+
+my $opt_config_file = "/etc/wum/wum.conf";
+my $opt_help = undef;
+
+Getopt::Long::Configure ("bundling", "pass_through");
+GetOptions ("config|c=s" => \$opt_config_file,
+            "help|h"     => \$opt_help
+);
+
+# As of 'pass_through' we get unknown options via @ARGV.
+# The hostname should be there...
+my $opt_hostname = $ARGV[0];
+
+# Check options
+if ($opt_help || ! defined $opt_hostname) {
+       print STDERR "Usage: wum_boot hostname\n";
+       print STDERR "\t[--config file_name | -c]\n";
+       print STDERR "\t[--help | -h]\n";
+       exit 0;
+}
+
+# Read config file
+my $config = WakeUpManager::Config-> new(config_file => $opt_config_file);
+if (! $config) {
+	print STDERR "Error: Failed to read configuraton from \"$opt_config_file\".\n";
+	exit 1;
+}
+
+my $ui_opts =  $config->get_ui_opts ();
+if (! $ui_opts) {
+	print STDERR "Error: No wum_boot not configuration in \"$opt_config_file\".\n";
+	exit 2;
+}
+
+# If no FQDN given, try to do autocompletion
+if (! ($opt_hostname =~ m/\./) && $ui_opts->{hostname_autocompletion}) {
+	my ($name, $aliases, $addrtype, $length, @addrs) = gethostbyname ($opt_hostname);
+	if (! $name) {
+		print STDERR "Error: You requested hostname autocompletion, but I could not find any FQDN for \"$opt_hostname\".\n";
+		exit 5;
+	}
+
+	$opt_hostname = $name;
+}
+
+
+# Get URL of RPC connection for UI
+if (! $ui_opts->{RPC_URL}) {
+	print STDERR "Error: RPC_URL no set in config file \"$opt_config_file\".\n";
+	exit 2;
+}
+
+# Setup RPC connection
+my $rpc_h = Frontier::Client->new (
+	url => "$ui_opts->{RPC_URL}/rpc/ui",
+	handle_perl_objects => 1);
+if (! $rpc_h) {
+	print STDERR "Error: Coult not connect to server.\n";
+	exit 3;
+}
+
+# eval'uate the agent call as it will 'die' on error...
+my $result = undef;
+eval {
+	$result = $rpc_h->call ('wakeUpManager.cmd.bootHost', $opt_hostname);
+};
+
+# Check the result of the RPC call
+if (! defined $result || ! rpc_result_ok ($result)) {
+print STDERR "Server reported: " . rpc_get_errmsg ($result) . "\n" if (defined $result);
+	exit 1;
+} else {
+	if ($ENV{'LANG'} =~ m/^de_/) {
+		print "Rechner $opt_hostname wird gestartet.\n";
+	} else {
+		print "Host $opt_hostname will be booted.\n";
+	}
+	exit 0;
+}
+
+1;
+
+# vim:foldmethod=marker

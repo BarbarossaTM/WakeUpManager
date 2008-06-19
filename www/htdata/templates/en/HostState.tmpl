@@ -1,0 +1,61 @@
+	 <p>
+	  It's possible to deactivate the time based control of Wake Up Manager for a host. <br>
+	  This may be used to deactivate your PC while in vacation, to prevent it from beeing booted.
+	 </p>
+
+	 <p>
+	  To view or update the activation state of a host choose the desired host from the list
+	  and click on the &quot;Show state&quot; button.
+	 </p>
+
+	 <p>
+	  After the state has been show, you are able to change the state and save your choice
+	  by clicking on the &quot;Save state&quot; button.
+	 </p>
+
+	<!-- If the user has the right to boot at least on host //-->
+	<TMPL_IF host_loop>
+	 <form name="host_state" action="" method="POST">
+
+	  <p>
+	   Choose the hosts
+	  </p>
+
+	  <div class="box">
+	   <div class="box_head">&raquo; Show host activation state</div>
+	   <div class="box_content">
+
+	    <div id='host_select'>
+	     <select name="host">
+	      <TMPL_LOOP NAME="host_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	      </TMPL_LOOP>
+	     </select>
+	    </div>
+
+	    <!-- Nur Rechner der Gruppe <Hostgroup> anzeigen. //-->
+	    <TMPL_IF hostgroup_loop>
+	     <p class='hostgroup_list'>
+	      Only show hosts of group
+
+	      <select name="group" onChange="updateHostlist();">
+	       <TMPL_LOOP NAME="hostgroup_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	       </TMPL_LOOP>
+	      </select>
+	     </p>
+	    </TMPL_IF>
+
+	    <input type="button" value='Show state' onClick="loadHostState();">
+	   </div>
+	  </div>
+	  <!-- box end //-->
+	 </form>
+
+	 <div id='result'>
+	 </div>
+
+	<!-- Ok, the user does NOT have the right to boot any host //-->
+	<TMPL_ELSE>
+	 <p>
+	  <i>You are not allowed to show the configuration of a host.</i>
+	 </p>
+	</TMPL_IF>

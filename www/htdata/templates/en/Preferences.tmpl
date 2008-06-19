@@ -1,0 +1,29 @@
+	 <p>
+	  It's possible to configure parts of the layout of the Wake Up Managers
+	  web interface.
+	 </p>
+
+
+	 <form name="Preferences" action="" method="POST">
+	  <p>
+	   Choose the desired options and click on the &quot;Save preferences&quot; button. <br>
+	   (Cookies have to be activated in your browser to use this feature.)
+	  </p>
+
+	  <div class="box">
+	   <div class="box_head">&raquo; Preferences for Wake Up Manager</div>
+	   <div class="box_content">
+	     <b>Orientation of host timetable</b>
+	     <div class="three_em">
+	      <TMPL_VAR timetable_orientation_radio>
+	     </div>
+
+	     <br>
+	     <input type="button" value='Save Preferneces' onClick="savePreferences();">
+	   </div>
+	  </div>
+	  <!-- box end //-->
+	 </form>
+
+	 <div id='result'>
+	 </div>
