@@ -295,10 +295,11 @@ sub _get_x1_x2_from_boot_list_item ($) { # _get_x1_x2_from_boot_list_item (\%boo
 	return [ $x1, $x2 ];
 } # }}}
 
-sub get_timetable_horizontal_map ($) { # get_timetable_horizontal_map (\%times_list) : "<map> ... </map>" # {{{
+sub get_timetable_horizontal_map ($$) { # get_timetable_horizontal_map (\%times_list, host_id) : "<map> ... </map>" # {{{
 	my $self = shift;
 
 	my $times_list = shift;
+	my $host_id = shift;
 
 	if (! $self || ref ($self) ne __PACKAGE__) {
 		confess __PACKAGE__ . "->get_timetable_horizontal_map(): Has to be called on bless'ed object.\n";
@@ -308,11 +309,16 @@ sub get_timetable_horizontal_map ($) { # get_timetable_horizontal_map (\%times_l
 		confess __PACKAGE__ . "->get_timetable_horizontal_map(): No or invalid times_list parameter given.\n";
 	}
 
+	if (! defined $host_id || ref ($host_id)) {
+		confess __PACKAGE__ . "->get_timetable_vertical_map(): No or invalid host_id parameter given.\n";
+	}
+
 	my $margin = $self->{margin};
 	my $row_height = $self->{row_height};
 	my $timeline_horiz = $self->{timeline_horiz};
 	my $left_width = $self->{left_width};
 
+	my $url = "/ui/index.pl?page=UpdateTimetable&host_id=$host_id";
 	my $image_map = "<map name=\"timetable\">\n";
 
 	for (my $n = 1; $n <= 7; $n++) {
@@ -331,7 +337,7 @@ sub get_timetable_horizontal_map ($) { # get_timetable_horizontal_map (\%times_l
 			my $x2 = $margin + $left_width + $x->[1];
 			my $y2 = $y + 5;
 
-			$image_map .= " <area shape=\"rect\" coords=\"$x1,$y1,$x2,$y2\" href=\"/\" title=\"$boot_time[0]:$boot_time[1] - $shutdown_time[0]:$shutdown_time[1]\">\n";
+			$image_map .= " <area shape=\"rect\" coords=\"$x1,$y1,$x2,$y2\" href=\"$url\" title=\"$boot_time[0]:$boot_time[1] - $shutdown_time[0]:$shutdown_time[1]\">\n";
 		}
 	}
 
@@ -491,10 +497,11 @@ sub print_timetable_vertical_png ($) { # print_timetable_vertical_png (\%times_l
 	});
 } # }}}
 
-sub get_timetable_vertical_map ($) { # print_timetable_vertical_map (\%times_list) : "<map> ... </map>"
+sub get_timetable_vertical_map ($$) { # print_timetable_vertical_map (\%times_list, $host_id) : "<map> ... </map>" {{{
 	my $self = shift;
 
 	my $times_list = shift;
+	my $host_id = shift;
 
 	if (! $self || ref ($self) ne __PACKAGE__) {
 		confess __PACKAGE__ . "->get_timetable_vertical_map(): Has to be called on bless'ed object.\n";
@@ -502,6 +509,10 @@ sub get_timetable_vertical_map ($) { # print_timetable_vertical_map (\%times_lis
 
 	if (! $times_list || ref ($times_list) ne 'HASH') {
 		confess __PACKAGE__ . "->get_timetable_vertical_map(): No or invalid times_list parameter given.\n";
+	}
+
+	if (! defined $host_id || ref ($host_id)) {
+		confess __PACKAGE__ . "->get_timetable_vertical_map(): No or invalid host_id parameter given.\n";
 	}
 
 	# Get variables for simpler access
@@ -512,6 +523,7 @@ sub get_timetable_vertical_map ($) { # print_timetable_vertical_map (\%times_lis
 	my $top_vert_height = $default_top_vert_height;
 	my $hour_height = $default_hour_height;
 
+	my $url = "/ui/index.pl?page=UpdateTimetable&host_id=$host_id";
 	my $image_map = "<map name=\"timetable\">\n";
 
 	for (my $n = 1; $n <= 7; $n++) {
@@ -528,12 +540,12 @@ sub get_timetable_vertical_map ($) { # print_timetable_vertical_map (\%times_lis
 			my $x2 = $x + 5;
 			my $y2 = $margin + $top_vert_height + ($shutdown_time[0] * 60 + $shutdown_time[1]) * $hour_height / 60;
 
-			$image_map .= " <area shape=\"rect\" href=\"/\" coords=\"$x1,$y1,$x2,$y2\" title=\"$boot_time[0]:$boot_time[1] - $shutdown_time[0]:$shutdown_time[1]\">\n";
+			$image_map .= " <area shape=\"rect\" href=\"$url\" coords=\"$x1,$y1,$x2,$y2\" title=\"$boot_time[0]:$boot_time[1] - $shutdown_time[0]:$shutdown_time[1]\">\n";
 		}
 	}
 
 	return $image_map . "</map>\n";
-}
+} # }}}
 
 1;
 
