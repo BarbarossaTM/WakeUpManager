@@ -73,11 +73,15 @@ sub get_content_elements() {
 
 	my $content_elements = {};
 
-	my $orientation = defined $self->{cookies}->{timetable_orientation} ? $self->{cookies}->{timetable_orientation} : 'horizontal';
-	if ($orientation eq 'horizontal') {
-		$content_elements->{timetable_orientation_radio} = "<input type=\"radio\" name=\"timetable_orientation\" value=\"horizontal\" checked> $lang_hash->{horizontal} <br> <input type=\"radio\" name=\"timetable_orientation\" value=\"vertical\"> $lang_hash->{vertical} \n";
-	} else {
+	my $orientation = $self->{params}->get_cookie (timetable_orientation);
+	if (! defined $orientation) {
+		$orientation = 'horizontal';
+	}
+
+	if ($orientation eq 'vertical') {
 		$content_elements->{timetable_orientation_radio} = "<input type=\"radio\" name=\"timetable_orientation\" value=\"horizontal\"> $lang_hash->{horizontal} <br> <input type=\"radio\" name=\"timetable_orientation\" value=\"vertical\" checked> $lang_hash->{vertical}\n";
+	} else {
+		$content_elements->{timetable_orientation_radio} = "<input type=\"radio\" name=\"timetable_orientation\" value=\"horizontal\" checked> $lang_hash->{horizontal} <br> <input type=\"radio\" name=\"timetable_orientation\" value=\"vertical\"> $lang_hash->{vertical} \n";
 	}
 
 	return $content_elements;

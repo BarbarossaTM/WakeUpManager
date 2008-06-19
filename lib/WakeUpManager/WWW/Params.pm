@@ -63,6 +63,11 @@ sub new () { # new () :  {{{
 		confess __PACKAGE__ . "->new(): No or invalid 'env' arguments.\n";
 	}
 
+	my $cookies = $args->{cookies};
+	if (! $cookies || ref ($cookies) ne 'HASH') {
+		confess __PACAKGE__ . "->new(): No or invalid 'cookies' argument.\n";
+	}
+
 	my $obj = bless {
 		debug => $debug,
 		verbose => $verbose,
@@ -71,6 +76,7 @@ sub new () { # new () :  {{{
 		page => $http_params->{page},
 		lang => $lang,
 		env => $env,
+		cookies => $cookies,
 
 		auth => $auth,
 	}, $class;
@@ -160,6 +166,23 @@ sub get_env_var ($) { # get_env_var (env_key) : ENV_value {{{
 
 	return $self->{env}->{$env_var_name};
 } # }}}
+
+sub get_cookies ($) { # get_cookie (cookies_name) : cookie_value {{{
+	my $self = shift;
+
+	my $cookie_name = shift;
+
+	if (! $self || ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->get_env_var(): Has to be called on bless'ed object.\n";
+	}
+
+	if (! defined $cookie_name) {
+		return undef;
+	}
+
+	return $self->{cookies}->{$env_var_name};
+} # }}}
+
 
 1;
 

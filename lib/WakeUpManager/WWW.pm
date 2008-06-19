@@ -81,16 +81,14 @@ sub new () { # new () :  {{{
 		auth => $obj->_get_user_info (),
 		lang => $obj->_get_lang (),
 		env => $obj->_get_all_ENV_vars (),
+		cookies => $obj->_get_all_cookies ($obj->{cgi_h}),
 	);
-
-	# Get a list of all cookies
-	$obj->{cookies} = $obj->_get_all_cookies ($obj->{cgi_h});
 
 	if (! $args->{no_header}) {
 		print $cgi_h->header ('text/html');
 	}
 	if (! $args->{contentless_mode}) {
-		$obj->{page} = WakeUpManager::WWW::Page->new (params => $obj->{params}, cookies => $obj->{cookies});
+		$obj->{page} = WakeUpManager::WWW::Page->new (params => $obj->{params});
 	}
 
 	return $obj;
@@ -106,7 +104,7 @@ sub get_page () { # get_page () : page_contents {{{
 	return $self->{page}->get_page ();
 } # }}}
 
-sub get_params () {
+sub get_params () { # {{{
 	my $self = shift;
 
 	if (! $self || ref ($self) ne __PACKAGE__) {
@@ -114,7 +112,7 @@ sub get_params () {
 	}
 
 	return $self->{http_params};
-}
+} # }}}
 
 ################################################################################
 #			internal helper functions			       #
@@ -223,7 +221,7 @@ sub _get_lang () { # _get_lang () : <lang> {{{
 	return 'en';
 } # }}}
 
-sub _get_all_ENV_vars () {
+sub _get_all_ENV_vars () { # {{{
 	my $self = shift;
 
 	if (ref ($self) ne __PACKAGE__) {
@@ -237,9 +235,9 @@ sub _get_all_ENV_vars () {
 	}
 
 	return $env;
-}
+} # }}}
 
-sub _get_POST_data () {
+sub _get_POST_data () { # {{{
 	my $self = shift;
 
 	if (ref ($self) ne __PACKAGE__) {
@@ -247,7 +245,7 @@ sub _get_POST_data () {
 	}
 
 	return $self->{cgi_h}->param('POSTDATA');
-}
+} # }}}
 
 1;
 
