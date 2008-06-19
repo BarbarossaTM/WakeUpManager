@@ -100,7 +100,7 @@ my $times_list = WakeUpManager::Common::Utils::get_times_list ($boot_times);
 print "<img src=\"/ui/ajax/get_time_table_for_host_png?host_id=$host_id\" alt=\"\" usemap=\"#timetable\">\n";
 
 if ($orientation eq 'vertical') {
-	print $gl->get_timetable_vertical_map ($times_list);
+	print $gl->get_timetable_vertical_map ($times_list, $host_id);
 } else {
-	print $gl->get_timetable_horizontal_map ($times_list);
+	print $gl->get_timetable_horizontal_map ($times_list, $host_id);
 }
