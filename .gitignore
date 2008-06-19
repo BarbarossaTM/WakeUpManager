@@ -1,0 +1,11 @@
+#
+# WakeUpManager main .gitignore
+#
+
+#
+# Ignore all debian stuff which is handled in a separed GIT
+debian/*
+
+#
+# Ignore all supplemental stuff which is handled different
+supplemental/*
