@@ -5,21 +5,23 @@
 #
 
 use strict;
-use CGI;
 
 use WakeUpManager::Common::Utils qw(:timetable);
 use WakeUpManager::Config;
 use WakeUpManager::DB::HostDB;
+use WakeUpManager::WWW;
 use WakeUpManager::WWW::GraphLib;
 
-
 #
-# CGI
-my $cgi = CGI->new ();
-print $cgi->header ('image/png');
+# WWW framework
+my $www = WakeUpManager::WWW->new (contentless_mode => 1);
+if (! $www) {
+	print "Content-Type: text/html\n\nAn internal error occured. Please contact the system administrator\n";
+}
+my $params = $www->{params};
 
 # Get host_id
-my $host_id = $cgi->param ("host_id");
+my $host_id = $params->get_http_param ("host_id");
 if (! $host_id) {
 	print "<span class=\"error\">Error: No host_id given.</span>\n";
 	print STDERR "Called without 'host_id'.\n";
@@ -27,7 +29,7 @@ if (! $host_id) {
 }
 
 # Try to get users preference for timetable
-my $orientation = $cgi->cookie('timetable_orientation');
+my $orientation = $params->get_cookie('timetable_orientation');
 if (! defined $orientation || ($orientation ne 'horizontal' && $orientation ne 'vertical')) {
 	$orientation = 'horizontal';
 }

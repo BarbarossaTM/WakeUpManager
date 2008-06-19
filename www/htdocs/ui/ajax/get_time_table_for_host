@@ -14,7 +14,7 @@ use WakeUpManager::WWW;
 
 
 #
-# CGI
+# WWW framework
 my $www = WakeUpManager::WWW->new (contentless_mode => 1);
 if (! $www) {
 	print "Content-Type: text/html\n\nAn internal error occured. Please contact the system administrator\n";
@@ -30,7 +30,7 @@ if (! $host_id) {
 }
 
 # Try to get users preference for timetable
-my $orientation = $www->{cookie}->{timetable_orientation};
+my $orientation = $params->get_cookie ('timetable_orientation');
 if (! defined $orientation || ($orientation ne 'horizontal' && $orientation ne 'vertical')) {
 	$orientation = 'horizonal';
 }
