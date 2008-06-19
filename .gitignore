@@ -3,9 +3,13 @@
 #
 
 #
-# Ignore all debian stuff which is handled in a separed GIT
+# Ignore all debian stuff which is handled in a separe GIT
 debian/*
 
 #
 # Ignore all supplemental stuff which is handled different
 supplemental/*
+
+#
+# Ignore all tex/ stuff which is handled in a separe GIT
+tex/*
