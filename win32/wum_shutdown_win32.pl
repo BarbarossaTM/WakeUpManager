@@ -1,4 +1,4 @@
-#!/usr/bin/perl -WT
+#!/usr/bin/perl -W -I C:\Programme\WakeUpManager\lib
 #
 # Maximilian Wilhelm <max@rfc2324.org>
 #  --  Mon 13 Jun 2008 00:34:23 PM CEST
@@ -9,9 +9,10 @@ use Carp;
 
 use WakeUpManager::Common::Utils qw(:timetable :state);
 use WakeUpManager::RPC::Utils;
-use WakeUpManager::WUM::Config;
+use WakeUpManager::Config;
 
 use Frontier::Client 1.01;
+use POSIX qw(strftime);
 
 use Win32::OLE('in');
 
@@ -22,10 +23,25 @@ use constant wbemFlagForwardOnly => 0x20;
 # Satisfy -T switch
 $ENV{'PATH'} = "c:\\Windows\\system32";
 
+my $log_file = $ENV{PROGRAMFILES} . "\\WakeUpManager\\log\\wum.log";
+open (LOG_FILE, ">> $log_file")
+	or die "Could not open logfile \"$log_file\" for writing: $!\n";
+
 sub log_msg ($$) {
 	my $level = shift;
 	my $msg = shift;
-	print "$level: $msg";
+	chomp $msg;
+
+	my $now_string = strftime ("%b %d %H:%M:%S", localtime);
+	print LOG_FILE "$now_string $level: $msg\n";
+}
+
+sub log_and_die ($) {
+	my $msg = shift;
+	chomp $msg;
+
+	log_msg ('err', $msg);
+	die "Error: $msg\n";
 }
 
 ################################################################################
@@ -42,26 +58,23 @@ my $time_window = 15;
 
 
 # Read additional configuration from file # {{{
-my $config_file = "c:\\Programme\\wum\\wum.conf";
+my $config_file = $ENV{PROGRAMFILES} . "\\WakeUpManager\\etc\\wum.conf";
 
 #
 # Read config file
-my $config = WakeUpManager::WUM::Config->new (config_file => $config_file);
+my $config = WakeUpManager::Config->new (config_file => $config_file);
 if (! $config) {
-	print STDERR "Error: Failed to read configuraton from \"$config_file\".\n";
-	exit 1;
+	log_and_die ("Failed to read configuraton from \"$config_file\".");
 }
 
 my $client_opts =  $config->get_client_opts ();
 if (! $client_opts) {
-	print STDERR "Error: Could not get 'CLIENT' configuration from \"$config_file\".\n";
-	exit 2;
+	log_and_die ("Could not get 'CLIENT' configuration from \"$config_file\".");
 }
 
 # Get URL of RPC connection for UI
 if (! $client_opts->{RPC_URL}) {
-	print STDERR "Error: RPC_URL no set in config file \"$config_file\".\n";
-	exit 2;
+	log_and_die ("RPC_URL no set in config file \"$config_file\".");
 }
 
 
@@ -153,8 +166,7 @@ my $rpc_h = Frontier::Client->new (
 	url => "$client_opts->{RPC_URL}/rpc/client",
 	handle_perl_objects => 1);
 if (! $rpc_h) {
-	log_msg ("err", "Could not connect to server.\n");
-	exit 3;
+	log_and_die ("Could not connect to server.\n");
 }
 
 # eval'uate the agent call as it will 'die' on error...
@@ -176,9 +188,7 @@ if (! defined $result || ! rpc_result_ok ($result)) {
 	if (ref ($rpc_value) ne 'HASH' ||
 	    ref ($rpc_value->{timetable} ne 'HASH') ||
 	    ref ($rpc_value->{host_state}) ne 'HASH') {
-		log_msg ("err", "Got invalid result from server.\n");
-		print STDERR "Got invalid result from server.\n";
-		exit 2;
+		log_and_die ("Got invalid result from server.\n");
 	}
 
 	# If host is not active, no reboot via WUM at all
@@ -197,6 +207,9 @@ if (! defined $result || ! rpc_result_ok ($result)) {
 	if ($supposed_state eq 'shutdown') {
 		log_msg ("info", "Machine should be shut down. Good night.\n");
 		system ('shutdown -s');
+	} else {
+		log_msg ("info", "Machine should not be shut down. Staying cool.\n");
+		exit 0;
 	}
 }
 
