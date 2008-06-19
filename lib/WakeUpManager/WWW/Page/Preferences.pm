@@ -73,7 +73,7 @@ sub get_content_elements() {
 
 	my $content_elements = {};
 
-	my $orientation = $self->{params}->get_cookie (timetable_orientation);
+	my $orientation = $self->{params}->get_cookie ('timetable_orientation');
 	if (! defined $orientation) {
 		$orientation = 'horizontal';
 	}

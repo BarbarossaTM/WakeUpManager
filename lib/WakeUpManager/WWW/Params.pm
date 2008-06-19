@@ -65,7 +65,7 @@ sub new () { # new () :  {{{
 
 	my $cookies = $args->{cookies};
 	if (! $cookies || ref ($cookies) ne 'HASH') {
-		confess __PACAKGE__ . "->new(): No or invalid 'cookies' argument.\n";
+		confess __PACKAGE__ . "->new(): No or invalid 'cookies' argument.\n";
 	}
 
 	my $obj = bless {
@@ -167,7 +167,7 @@ sub get_env_var ($) { # get_env_var (env_key) : ENV_value {{{
 	return $self->{env}->{$env_var_name};
 } # }}}
 
-sub get_cookies ($) { # get_cookie (cookies_name) : cookie_value {{{
+sub get_cookie ($) { # get_cookie (cookies_name) : cookie_value {{{
 	my $self = shift;
 
 	my $cookie_name = shift;
@@ -180,7 +180,7 @@ sub get_cookies ($) { # get_cookie (cookies_name) : cookie_value {{{
 		return undef;
 	}
 
-	return $self->{cookies}->{$env_var_name};
+	return $self->{cookies}->{$cookie_name};
 } # }}}
 
 
