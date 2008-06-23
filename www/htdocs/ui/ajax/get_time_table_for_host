@@ -66,7 +66,7 @@ if (! $host_name) {
 # Check if user is allow to show host config
 if (! $host_db->user_can_read_host_config ($user, $host_id)) {
 	if ($lang eq 'de') {
-		print "Zeitplan f&uuml;r Rechner <i>$host_name</i> kann nicht angezeigt werden: Keine Berechtignung f&uuml;r \"$user\".";
+		print "Zeitplan f&uuml;r Rechner <i>$host_name</i> kann nicht angezeigt werden: Keine Berechtignung f&uuml;r Benutzer \"$user\".";
 	} else {
 		print "<span class=\"error\">Sorry, user \"$user\" is not allowed to view config for host \"$host_name\".</span>";
 	}

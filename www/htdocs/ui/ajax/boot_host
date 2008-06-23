@@ -88,7 +88,7 @@ if ($host_db->user_can_boot_host ($user, $host_id)) {
 	if ($lang eq 'de') {
 		print "<span class=\"error\">Host <i>$host_name</i> (ID: $host_id) kann nicht gestartet werden. Aktion nicht gestattet f&uuml;r Nutzer $user.</span>\n";
 	} else {
-		 print "<span class=\"error\"Booting <i>$host_name</i> not allowed to user $user.</span>\n";
+		 print "<span class=\"error\"Booting <i>$host_name</i> not allowed for user $user.</span>\n";
 	}
 	print STDERR "Error: User \"$user\" has no right to boot host \"$host_name\" (ID: $host_id)";
 }

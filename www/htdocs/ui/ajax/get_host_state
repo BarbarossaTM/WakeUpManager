@@ -67,11 +67,11 @@ if (ref ($host_state) ne 'HASH') {
 	exit 0;
 }
 
-my $boot_host_name = 'boot host';
-my $shutdown_host_name = 'shutdown host';
+my $boot_host_name = 'Allow WakeUpManager to boot this host';
+my $shutdown_host_name = 'Allow WakeUpManager to shutdown this host';
 if ($lang eq 'de') {
-	$boot_host_name = 'Rechner starten';
-	$shutdown_host_name = 'Rechner herunterfahren';
+	$boot_host_name = 'WakeUpManager erlauben, den Rechner zu starten';
+	$shutdown_host_name = 'WakeUpManager erlauben, den Rechner herunterzufahren';
 
 }
 
