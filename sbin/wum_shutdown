@@ -32,6 +32,11 @@ my $boot_grace_time = 15;
 # boot event following a potential current shutdown event.
 my $time_window = 15;
 
+#
+# Should the query on the server be delayed for some random amount of time?
+my $sleep = ($ARGV[0] eq '-s') ? 1 : 0;
+
+
 # List of processes (WITHOUT args) to be ignored when checking the
 # process list for user processes which prevent us from shutting down
 # the machine.
@@ -238,6 +243,11 @@ if (! $rpc_h) {
 	log_msg ("err", "Could not connect to server.\n");
 	print STDERR "Error: Could not connect to server.\n";
 	exit 3;
+}
+
+# Delay query?
+if ($sleep) {
+	sleep (30 * rand ());
 }
 
 # eval'uate the agent call as it will 'die' on error...
