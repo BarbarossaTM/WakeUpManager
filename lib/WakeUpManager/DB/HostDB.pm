@@ -478,7 +478,7 @@ sub _get_hostgroup_tree_below_group_worker ($$$$$) { # _get_hostgroup_tree_below
 } # }}}
 
 ################################################################################
-#			Host / Hostgroup ACL stuff			       #
+#			Host / Hostgroup ACL (queris)			       #
 ################################################################################
 
 #
@@ -698,7 +698,6 @@ sub user_can_write_hostgroup_config ($$) { # user_can_write_hostgroup_config (ui
 
 	return $self->_user_has_right_on_hostgroup ($uid, "write_config", $hostgroup);
 } # }}}
-
 
 #
 # Get all hosts where $user has $right on
@@ -951,7 +950,90 @@ sub hostgroups_user_can_write_config ($) { # hostgroups_user_can_write_config (u
 	return $self->_hostgroups_user_has_right_on ($uid, "write_config");
 } # }}}
 
+################################################################################
+#			Host / Hostgroup ACL (updates)			       #
+################################################################################
 
+sub give_user_rights_on_hostgroups ($$$) { # give_user_rights_on_hostgroups (uid, \@hostgroup_ids, \@right_list) : 0/1 {{{
+	my $self = shift;
+
+	my $uid = shift;
+	my $hg_id_list = shift;
+	my $right_list = shift;
+
+	return undef if (ref ($self) ne __PACKAGE__);
+
+	return undef if (! defined $uid || $uid =~ m/^[^-[:alnum:]]+$/);
+	return undef if (ref ($hg_id_list) ne 'ARRAY');
+	return undef if (ref ($right_list) ne 'ARRAY' || scalar (@{$right_list}) != 3);
+
+	my $rights_boolean = [];
+	foreach my $right_elem (@{$right_list}) {
+		push @{$rights_boolean}, ($right_elem) ? 't' : 'f';
+	}
+
+	# Preprare hostgroup ACL query
+	my $sth_query = $self->{db_h}->prepare ("
+		SELECT	allow_boot, read_config, write_config
+		FROM	hostgroup_acl
+		WHERE		hostgroup_id = :hg_id
+			AND	uid = :uid
+	") or die;
+	$sth_query->bind_param (":uid", $uid) or die;
+
+	my $sth_update = $self->{db_h}->prepare ("
+		UPDATE	hostgroup_acl
+		SET	allow_boot = :boot,
+			read_config = :read,
+			write_config = :write
+		WHERE		hostgroup_id = :hg_id
+			AND	uid = :uid
+	") or die;
+	$sth_update->bind_param (":uid", $uid) or die;
+
+	my $sth_insert = $self->{db_h}->prepare ("
+		INSERT INTO	hostgroup_acl
+				(hostgroup_id, uid, allow_boot, read_config, write_config)
+			values  (:hg_id, :uid, :boot, :read, :write)
+	") or die;
+	$sth_insert->bind_param (":uid", $uid) or die;
+
+
+	foreach my $hg_id (@{$hg_id_list}) {
+		$sth_query->bind_param (":hg_id", $hg_id) or die;
+		$sth_query->execute () or die;
+
+		# Check for existing rights in DB
+		my @db_rights = $sth_query->fetchrow ();
+
+		# Found right entry, update it.
+		if (@db_rights) {
+			$sth_update->bind_param (":hg_id", $hg_id) or die;
+
+			for (my $n = 0; $n <= 2; $n++) {
+				if (defined $right_list->[$n]) {
+					$db_rights[$n] = $rights_boolean->[$n];
+				} else {
+					$db_rights[$n] = ($db_rights[$n]) ? 't' : 'f';
+				}
+			}
+
+			$sth_update->bind_param (":boot", $rights_boolean->[0]) or die;
+			$sth_update->bind_param (":read", $rights_boolean->[1]) or die;
+			$sth_update->bind_param (":write", $rights_boolean->[2]) or die;
+			$sth_update->execute () or die;
+		}
+		
+		# No entry there, insert one
+		else {
+			$sth_insert->bind_param (":hg_id", $hg_id) or die;
+			$sth_insert->bind_param (":boot", $rights_boolean->[0]) or die;
+			$sth_insert->bind_param (":read", $rights_boolean->[1]) or die;
+			$sth_insert->bind_param (":write", $rights_boolean->[2]) or die;
+			$sth_insert->execute () or die;
+		}
+	}
+} # }}}
 
 ################################################################################
 #			    Agent / network stuff			       #
