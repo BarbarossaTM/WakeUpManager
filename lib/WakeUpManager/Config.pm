@@ -183,6 +183,16 @@ sub get_agent_opts () { # get_agent_opts () : \%agent_opts {{{
 	return $self->{config}->{Agent};
 } # }}}
 
+sub get_mgnt_opts () { # get_mgnt_opts () : \%mgnt_opts {{{
+	my $self = shift;
+
+	if (ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->get_agent_opts(): Has to be called on bless'ed object.\n";
+	}
+
+	return $self->{config}->{USER_MGNT};
+} # }}}
+
 1;
 
 # vim:foldmethod=marker
