@@ -1,0 +1,38 @@
+	 <p>
+	  Wake Up Manager offers the possibilty to boot and shutdown hosts based on a timetable.
+	 </p>
+
+	<!-- Handle errors first //-->
+	<TMPL_IF error>
+	 <p class="error">
+
+	 <TMPL_IF no_host_id>
+	   Error: Parameter 'host_id' missing.
+	 </TMPL_IF>
+
+	 <TMPL_IF user_not_allowed>
+	   You are not allowed to update the timetable of host <TMPL_VAR hostname>.
+	 </TMPL_IF>
+
+	 <TMPL_IF cant_read_timetable>
+	  Error: Could not load timetable of host <TMPL_VAR hostname>.
+	 </TMPL_IF>
+
+	 </p>
+	<TMPL_ELSE>
+
+	 <!-- If the user has the right to read the config of least on host //-->
+	 <TMPL_IF timetable>
+	 <form name="update_timetable_form" action="" method="POST">
+	 <div class="box">
+	  <div class="box_head">&raquo; Timetable of host <TMPL_VAR hostname></div>
+	  <div class="box_content">
+	  <TMPL_VAR timetable>
+	  </div>
+	 </div>
+	 </form>
+
+	  <div id='result'>
+	  </div>
+	 </TMPL_IF>
+	</TMPL_IF>

@@ -1,0 +1,38 @@
+	 <p>
+	  Der WakeUpManager bietet die M&ouml;glichkeit, Rechner zeitgesteuert herauf- und herunterzufahren.
+	 </p>
+
+	<!-- Handle errors first //-->
+	<TMPL_IF error>
+	 <p class="error">
+
+	 <TMPL_IF no_host_id>
+	   Fehler: Parameter 'host_id' nicht angegeben.
+	 </TMPL_IF>
+
+	 <TMPL_IF user_not_allowed>
+	   Sie haben nicht das Recht die Startzeiten des Rechners <TMPL_VAR hostname> zu &auml;ndern.
+	 </TMPL_IF>
+
+	 <TMPL_IF cant_read_timetable>
+	  Fehler: Der Zeitplan des Rechner <TMPL_VAR hostname> konnte nicht geladen werden.
+	 </TMPL_IF>
+
+	 </p>
+	<TMPL_ELSE>
+
+	 <!-- If the user has the right to read the config of least on host //-->
+	 <TMPL_IF timetable>
+	 <form name="update_timetable_form" action="" method="POST">
+	 <div class="box">
+	  <div class="box_head">&raquo; Zeitplan f&uuml;r Rechner <TMPL_VAR hostname></div>
+	  <div class="box_content">
+	  <TMPL_VAR timetable>
+	  </div>
+	 </div>
+	 </form>
+
+	  <div id='result'>
+	  </div>
+	 </TMPL_IF>
+	</TMPL_IF>
