@@ -1172,16 +1172,12 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 	my $sth;
 	if ($localtime[2] * 60 + $localtime[1] + $window_width_minutes <= 24 * 60) {
 		$sth = $self->{db_h}->prepare ("
-			SELECT  DISTINCT host_id, name
-			FROM    host h,
-				times t
+			SELECT  DISTINCT csid
+			FROM    times t
 			WHERE           t.action = 'boot'
 				AND	t.day = :day
 				AND     t.time::interval >= now()::time
 				AND     t.time::interval <= now()::time + :window_width::interval
-				AND     h.csid = t.csid
-				AND	h.boot_host = 't'
-			ORDER BY h.host_id
 		");
 
 		$sth->bind_param (":day", $day) or confess ();
@@ -1203,9 +1199,8 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 		}
 
 		$sth = $self->{db_h}->prepare ("
-			SELECT  DISTINCT host_id, name
-			FROM    host h,
-				times t
+			SELECT  DISTINCT csid
+			FROM    times t
 			WHERE           t.action = 'boot'
 				AND	(
 						t.day = :day
@@ -1218,9 +1213,6 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 					AND     t.time <= :window_width_day2
 
 					)
-				AND     h.csid = t.csid
-				AND	h.boot_host = 't'
-			ORDER BY h.host_id
 		");
 		$sth->bind_param (":day", $day) or confess ();
 		$sth->bind_param (":day2", $day2) or confess ();
@@ -1230,7 +1222,176 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 
 	$sth->execute () or confess ();
 
+	my @config_set_list;
+	while (my @row = $sth->fetchrow ()) {
+		push @config_set_list, $row[0];
+	}
+	my $hosts = {};
+
+	#
+	# Get all hosts to be booted regularly
+	foreach my $csid (@config_set_list) {
+		my $host_list = $self->get_hosts_using_config_set ($csid);
+
+		foreach my $item (@{$host_list}) {
+			$hosts->{$item->[0]} = $item->[1];
+		}
+	}
+
+	#
+	# Get all hosts to be booted via admin config set
+	my $hostgroups = $self->get_hostgroups_using_admin_config_set (\@config_set_list);
+	foreach my $hg_id (@{$hostgroups}) {
+		my $hg_hosts_hash = $self->get_hosts_in_hostgroup ($hg_id);
+
+		foreach my $host_id (keys %{$hg_hosts_hash}) {
+			$hosts->{$host_id} = $hg_hosts_hash->{$host_id}->{name};
+		}
+	}
+
+	#
+	# Prepare output list
+	my @host_list;
+	foreach my $key (sort {$a <=> $b } keys %{$hosts}) {
+		push @host_list, [ $key, $hosts->{$key} ];
+	}
+
+	return \@host_list;
+} # }}}
+
+sub get_hosts_using_config_set ($) { # get_hosts_using_config_set (config_set_id) : \@hosts # {{{
+	my $self = shift;
+
+	my $csid = shift;
+
+	# Called on blessed instance?
+	if (ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->get_hosts_using_config_set(): Has to be called on bless'ed object.\n";
+	}
+
+	if (! defined $csid || $csid =~ m/^[^0-9]$/) {
+		confess __PACKAGE__ . "->get_hosts_using_config_set(): No or invalid config set id.\n";
+	}
+
+	my $sth = $self->{db_h}->prepare ("
+		SELECT DISTINCT	host_id, name
+		FROM	host
+		WHERE	csid = :csid
+	");
+	$sth->bind_param (":csid", $csid) or die;
+	$sth->execute () or die;
+
 	return $sth->fetchall_arrayref ();
+} # }}}
+
+sub get_hostgroups_using_admin_config_set ($) { # get_hostgroups_using_admin_config_set (\@config_set_list) : \@hosts # {{{
+	my $self = shift;
+
+	my $config_set_list = shift;
+
+	# Called on blessed instance?
+	if (ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->get_hosts_using_config_set(): Has to be called on bless'ed object.\n";
+	}
+
+	if (ref ($config_set_list) ne 'ARRAY') {
+		confess __PACKAGE__ . "->get_hosts_using_config_set(): No or invalid config set id.\n";
+	}
+
+	my $config_set_hash = {};
+	foreach my $csid (@{$config_set_list}) {
+		$config_set_hash->{$csid} = 1;
+	}
+
+	#
+	# Get all hosts to be booted by admin config set
+	my $hg_ALL_id = $self->get_hostgroup_id ('ALL');
+	if (! $hg_ALL_id) {
+		confess __PACKAGE__ . "->get_hosts_using_config_set(): Hostgroup 'ALL' does not exist!\n";
+	}
+
+	my $hg_tree = $self->get_hostgroup_tree_below_group ($hg_ALL_id);
+	if (! $hg_tree) {
+		confess __PACKAGE__ . "->get_hosts_using_config_set(): Could not get hostgroup tree.\n";
+	}
+
+	my $sth = $self->{db_h}->prepare ("
+		SELECT	admin_csid
+		FROM	hostgroup
+		WHERE	hostgroup_id = :hg_id
+	") or die;
+
+	my $hostgroups = {};
+	my $active = 0;
+
+	# Check 'ALL' hostgroup (tree root)
+	my $hg_id = $hg_tree->{id};
+	if (! $hg_id) {
+		confess __PACKAGE__ . "->get_hosts_using_admin_config_set(): Invalid hash. No 'id' found.\n";
+	}
+	$sth->bind_param (":hg_id", $hg_id);
+	$sth->execute ();
+	my @row = $sth->fetchrow ();
+	if (@row && $row[0] && $config_set_hash->{$row[0]}) {
+		$active = 1;
+		$hostgroups->{$hg_id} = 1;
+	}
+
+	$self->_get_hostgroups_using_admin_config_set_worker ($config_set_hash, $hg_tree->{members}, $sth, $hostgroups, $active);
+
+	my @hg_list = keys %{$hostgroups};
+
+	return \@hg_list;
+} # }}}
+
+sub _get_hostgroups_using_admin_config_set_worker ($$$$$) { # get_hostgroupss_using_admin_config_set ($config_set_hash, hg_tree, sth, \%hosts, active) : {{{
+	my $self = shift;
+
+	my $config_set_hash = shift;
+	my $hostgroup_tree_subhash = shift;
+	my $sth = shift;
+	my $hostgroup_hash = shift;
+	my $active = shift;
+
+	# Called on blessed instance?
+	if (ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->get_hosts_using_config_set(): Has to be called on bless'ed object.\n";
+	}
+
+	if (! $config_set_hash || ref ($config_set_hash) ne 'HASH' ||
+	    ! $hostgroup_tree_subhash || ref ($hostgroup_tree_subhash) ne 'HASH' ||
+	    ! $sth ||
+	    ! $hostgroup_hash || ref ($hostgroup_hash) ne 'HASH') {
+		return undef;
+	}
+
+	foreach my $key (keys %{$hostgroup_tree_subhash}) {
+		$sth->bind_param (":hg_id", $key) or die;
+		$sth->execute () or die;
+
+		my @row = $sth->fetchrow ();
+		if (@row && $row[0]) {
+			if ($config_set_hash->{$row[0]}) {
+				$active = 1;
+			} else {
+				$active = 0;
+			}
+		}
+
+		if ($active) {
+			$hostgroup_hash->{$key} = 1;
+
+		}
+
+		if ($hostgroup_tree_subhash->{$key}->{members}) {
+			$self->_get_hostgroups_using_admin_config_set_worker (
+				$config_set_hash,
+				$hostgroup_tree_subhash->{$key}->{members},
+				$sth,
+				$hostgroup_hash,
+				$active);
+		}
+	}
 } # }}}
 
 1;
