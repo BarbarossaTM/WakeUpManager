@@ -71,6 +71,8 @@ CREATE TABLE host (
 	FOREIGN KEY (csid) REFERENCES config_set (csid),
 	FOREIGN KEY (net_id) REFERENCES network (net_id)
 );
+CREATE INDEX host_csid_key on host using BTREE (csid);
+
 
 CREATE VIEW v_host
 	AS
@@ -148,6 +150,7 @@ CREATE TABLE hostgroup_host (
 	FOREIGN KEY (hostgroup_id) REFERENCES hostgroup (hostgroup_id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX hostgroup_host_host_id_key on hostgroup_host using BTREE (host_id);
+CREATE INDEX hostgroup_host_hostgroup_id_key on hostgroup_host using BTREE (hostgroup_id);
 
 CREATE VIEW v_hostgroup_host
 	AS
@@ -171,7 +174,7 @@ CREATE TABLE hostgroup_tree (
 	FOREIGN KEY (member_group_id) REFERENCES hostgroup (hostgroup_id) ON DELETE CASCADE
 );
 CREATE INDEX hostgroup_tree_super_group_id_key on hostgroup_tree using BTREE (super_group_id);
-CREATE INDEX hostgroup_tree_member_group_id_key on hostgroup_tree using BTREE (member_group_id);
+CREATE UNIQUE INDEX hostgroup_tree_member_group_id_key on hostgroup_tree using BTREE (member_group_id);
 
 
 --
