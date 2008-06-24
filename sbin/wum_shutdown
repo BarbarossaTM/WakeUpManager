@@ -34,7 +34,7 @@ my $time_window = 15;
 
 #
 # Should the query on the server be delayed for some random amount of time?
-my $sleep = ($ARGV[0] eq '-s') ? 1 : 0;
+my $sleep = (@ARGV && $ARGV[0] eq '-s') ? 1 : 0;
 
 
 # List of processes (WITHOUT args) to be ignored when checking the
