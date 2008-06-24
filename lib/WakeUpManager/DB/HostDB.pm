@@ -1156,7 +1156,7 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 		confess __PACKAGE__ . "->get_hosts_to_start_within_next_window(): Has to be called on bless'ed object.\n";
 	}
 
-	if (! $window_width || ! $window_width =~ m/^[0-5][0-9]:[0-5][0-9]$/) {
+	if (! $window_width || ! ($window_width =~ m/^[0-5][0-9]:[0-5][0-9]$/)) {
 		confess __PACKAGE__ . "->get_hosts_to_start_within_next_window(): No or invalid 'window_width' parameter.\n";
 	}
 	my @window_width_list = split (':', $window_width);
@@ -1172,12 +1172,16 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 	my $sth;
 	if ($localtime[2] * 60 + $localtime[1] + $window_width_minutes <= 24 * 60) {
 		$sth = $self->{db_h}->prepare ("
-			SELECT  DISTINCT csid
-			FROM    times t
+			SELECT  DISTINCT host_id, name
+			FROM    host h,
+				times t
 			WHERE           t.action = 'boot'
 				AND	t.day = :day
 				AND     t.time::interval >= now()::time
 				AND     t.time::interval <= now()::time + :window_width::interval
+				AND     h.csid = t.csid
+				AND	h.boot_host = 't'
+			ORDER BY h.host_id
 		");
 
 		$sth->bind_param (":day", $day) or confess ();
@@ -1199,8 +1203,9 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 		}
 
 		$sth = $self->{db_h}->prepare ("
-			SELECT  DISTINCT csid
-			FROM    times t
+			SELECT  DISTINCT host_id, name
+			FROM    host h,
+				times t
 			WHERE           t.action = 'boot'
 				AND	(
 						t.day = :day
@@ -1213,6 +1218,96 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 					AND     t.time <= :window_width_day2
 
 					)
+				AND     h.csid = t.csid
+				AND	h.boot_host = 't'
+			ORDER BY h.host_id
+		");
+		$sth->bind_param (":day", $day) or confess ();
+		$sth->bind_param (":day2", $day2) or confess ();
+		$sth->bind_param (":window_width_day1", $window_width_day1) or confess ();
+		$sth->bind_param (":window_width_day2", $window_width_day2) or confess ();
+	}
+
+	$sth->execute () or confess ();
+
+	return $sth->fetchall_arrayref ();
+} # }}}
+
+
+
+sub get_hosts_to_start_within_next_window_admin ($) { # get_hosts_to_start_within_next_window_admin (time_window) : \@hosts {{{
+	my $self = shift;
+
+	my $window_width = shift;
+
+	# Called on blessed instance?
+	if (ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->get_hosts_to_start_within_next_window_admin(): Has to be called on bless'ed object.\n";
+	}
+
+	if (! $window_width || ! ($window_width =~ m/^[0-5][0-9]:[0-5][0-9]$/)) {
+		confess __PACKAGE__ . "->get_hosts_to_start_within_next_window_admin(): No or invalid 'window_width' parameter.\n";
+	}
+	my @window_width_list = split (':', $window_width);
+	my $window_width_minutes = $window_width_list[0] * 60 + $window_width_list[1];
+
+	my @localtime = localtime (time);
+	my $dow = $localtime[6];
+	my $day = WakeUpManager::Common::Utils::dow_to_day ($dow);
+	if (! $day) {
+		return undef;
+	}
+
+	my $sth;
+	if ($localtime[2] * 60 + $localtime[1] + $window_width_minutes <= 24 * 60) {
+		$sth = $self->{db_h}->prepare ("
+			SELECT  DISTINCT c.csid
+			FROM    times t,
+				config_set c
+			WHERE           t.action = 'boot'
+				AND	t.day = :day
+				AND     t.time::interval >= now()::time
+				AND     t.time::interval <= now()::time + :window_width::interval
+				AND     t.csid = c.csid
+				AND	c.administrative = 't'
+		");
+
+		$sth->bind_param (":day", $day) or confess ();
+		$sth->bind_param (":window_width", $window_width) or confess ();
+
+	} else {
+		my $window_width_day1 = 24 * 60 - ($localtime[2] * 60 + $localtime[1]);
+		my $window_width_day2_minutes = $window_width_minutes - $window_width_day1;
+		my $window_width_day2_minutes_hour_part;
+		{
+			use integer;
+			$window_width_day2_minutes_hour_part = $window_width_day2_minutes / 60
+		};
+		my $window_width_day2 = "$window_width_day2_minutes_hour_part:" . ($window_width_day2_minutes - ($window_width_day2_minutes_hour_part * 60));
+
+		my $day2 = WakeUpManager::Common::Utils::dow_to_day (($dow + 1) % 7);
+		if (! $day2) {
+			return undef;
+		}
+
+		$sth = $self->{db_h}->prepare ("
+			SELECT  DISTINCT c.csid
+			FROM    times t,
+				config_set c
+			WHERE           t.action = 'boot'
+				AND	(
+						t.day = :day
+					AND     t.time >= now()::time
+					AND     t.time <= now()::time + :window_width_day1::interval
+					)
+				OR	(
+						t.day = :day2
+					AND     t.time >= '00:00:00'::time
+					AND     t.time <= :window_width_day2
+
+					)
+				AND     t.csid = c.csid
+				AND	c.administrative = 't'
 		");
 		$sth->bind_param (":day", $day) or confess ();
 		$sth->bind_param (":day2", $day2) or confess ();
@@ -1226,20 +1321,10 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 	while (my @row = $sth->fetchrow ()) {
 		push @config_set_list, $row[0];
 	}
-	my $hosts = {};
-
-	#
-	# Get all hosts to be booted regularly
-	foreach my $csid (@config_set_list) {
-		my $host_list = $self->get_hosts_using_config_set ($csid);
-
-		foreach my $item (@{$host_list}) {
-			$hosts->{$item->[0]} = $item->[1];
-		}
-	}
 
 	#
 	# Get all hosts to be booted via admin config set
+	my $hosts;
 	my $hostgroups = $self->get_hostgroups_using_admin_config_set (\@config_set_list);
 	foreach my $hg_id (@{$hostgroups}) {
 		my $hg_hosts_hash = $self->get_hosts_in_hostgroup ($hg_id);
@@ -1257,31 +1342,6 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 	}
 
 	return \@host_list;
-} # }}}
-
-sub get_hosts_using_config_set ($) { # get_hosts_using_config_set (config_set_id) : \@hosts # {{{
-	my $self = shift;
-
-	my $csid = shift;
-
-	# Called on blessed instance?
-	if (ref ($self) ne __PACKAGE__) {
-		confess __PACKAGE__ . "->get_hosts_using_config_set(): Has to be called on bless'ed object.\n";
-	}
-
-	if (! defined $csid || $csid =~ m/^[^0-9]$/) {
-		confess __PACKAGE__ . "->get_hosts_using_config_set(): No or invalid config set id.\n";
-	}
-
-	my $sth = $self->{db_h}->prepare ("
-		SELECT DISTINCT	host_id, name
-		FROM	host
-		WHERE	csid = :csid
-	");
-	$sth->bind_param (":csid", $csid) or die;
-	$sth->execute () or die;
-
-	return $sth->fetchall_arrayref ();
 } # }}}
 
 sub get_hostgroups_using_admin_config_set ($) { # get_hostgroups_using_admin_config_set (\@config_set_list) : \@hosts # {{{
