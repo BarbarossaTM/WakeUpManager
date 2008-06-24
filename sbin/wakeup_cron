@@ -58,7 +58,7 @@ if (! $host_list) {
 
 $host_count = scalar (@{$host_list});
 $success_count = 0;
-if ($host_count > 0 ) {
+if ($host_count > 0) {
 	log_msg ("info", "Booting hosts according to host config sets...\n");
 	foreach my $host_data (@{$host_list}) {
 		my $log_msg = "Booting host $host_data->[1] (#$host_data->[0]): ";
@@ -90,7 +90,7 @@ if (! $host_list) {
 
 $host_count = scalar (@{$host_list});
 $success_count = 0;
-if ($host_list > 0 ) {
+if ($host_count > 0) {
 	log_msg ("info", "Booting hosts according to admin config sets...\n");
 	foreach my $host_data (@{$host_list}) {
 		my $log_msg = "Booting host $host_data->[1] (#$host_data->[0]): ";
