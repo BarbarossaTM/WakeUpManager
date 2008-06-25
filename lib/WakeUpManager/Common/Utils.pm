@@ -10,10 +10,10 @@ use strict;
 use base 'Exporter';
 
 our @EXPORT    = qw();
-our @EXPORT_OK = qw(string2time dow_to_day get_times_list get_times_by_hour get_host_state);
+our @EXPORT_OK = qw(string2time dow_to_day get_times_list get_times_by_hour get_host_state order_times_list);
 our %EXPORT_TAGS = (
 	time => [qw(string2time dow_to_day)],
-	timetable => [qw(get_times_list get_times_by_hour)],
+	timetable => [qw(get_times_list get_times_by_hour order_times_list)],
 	state => [qw(get_host_state)],
 	all => \@EXPORT_OK
 );
@@ -280,7 +280,7 @@ sub get_times_by_hour ($) { # {{{
 } # }}}
 
 
-sub get_host_state ($;$) { # get_current_host_state (\%timetable ; $window_width) : 'boot'/'shutdown'
+sub get_host_state ($;$) { # get_current_host_state (\%timetable ; $window_width) : 'boot'/'shutdown' {{{
 	my $times_from_db = shift;
 
 	my $window_width = shift;
@@ -341,8 +341,61 @@ sub get_host_state ($;$) { # get_current_host_state (\%timetable ; $window_width
 	# decision, the only choice is to shut down the PC as there is
 	# no entry which would tell us to stay up.
 	return "shutdown";
-}
+} # }}}
 
+
+sub order_times_list ($) { # order_times_list (\%times_list) : \%times_list {{{
+	my $times_list = shift;
+
+	if (ref ($times_list) ne 'HASH') {
+		return undef;
+	}
+
+	my $ordered_times_list = {};
+
+	for (my $n = 1; $n <= 7; $n++) {
+		my $day_name = dow_to_day ($n);
+		if (! $day_name) {
+			return undef;
+		}
+
+		if (! $times_list->{$day_name}) {
+			# Maybe there are no entries for this day
+			next;
+		}
+		if (ref ($times_list->{$day_name}) ne 'ARRAY') {
+			die "order_times_list(): Invalid entry for day $day_name";
+		}
+
+		my @day_times_list = @{$times_list->{$day_name}};
+
+		my @ordered_day_list = sort _by_boot_time @day_times_list;
+
+		$ordered_times_list->{$day_name} = \@ordered_day_list;
+	}
+
+	return $ordered_times_list;
+} # }}}
+
+sub _by_boot_time () { # {{{
+	my @a_boot_time = split (':', $a->{boot});
+	my @b_boot_time = split (':', $b->{boot});
+
+	my $a_time_minutes = $a_boot_time[1] * 60 + $a_boot_time[0];
+	my $b_time_minutes = $b_boot_time[1] * 60 + $b_boot_time[0];
+
+	if ($a_time_minutes < $b_time_minutes) {
+		return -1;
+	}
+
+	elsif ($a_time_minutes = $b_time_minutes) {
+		return 0;
+	}
+
+	else {
+		return 1;
+	}
+} # }}}
 
 1;
 
