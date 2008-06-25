@@ -173,12 +173,14 @@ sub _is_valid_page ($) { # _is_valid_page (page_name) : int  {{{
 
 	# If $page is the empty string or contains anything different than
 	# [A-Za-z] characters, someone is tampering with us...
-	if (! defined $page || length ($page) == 0 || $page =~ m/[^[A-Za-z]]/) {
+	if (! defined $page || length ($page) == 0 || ! ($page =~ m/^([A-Za-z]+)$/)) {
 		print STDERR "Cheater detected, request for page \"$page\".";
 		return -23;
 	}
 
-	my $module = "WakeUpManager::WWW::Page::$page";
+	# Untaint $page by using regexp with backreference
+	#  => Perl Cookbook, Chapter 19.4 "Writing a Safe CGI Program"
+	my $module = "WakeUpManager::WWW::Page::$1";
 
 	# Idea stolen by OTRS (beware of ugly code!)
 	if (eval "require $module") {
