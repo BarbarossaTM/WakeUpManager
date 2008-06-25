@@ -36,7 +36,14 @@
 	 </form>
 
 	  <div id='result'>
-<TMPL_IF result><TMPL_VAR result></TMPL_IF>
+	   <TMPL_IF result>
+	    <div class="box">
+	     <div class="box_head">&raquo; Result</div>
+	      <div class="box_content">
+	       <TMPL_VAR result>
+	      </div>
+	     </div>
+	   </TMPL_IF>
 	  </div>
 	 </TMPL_IF>
 	</TMPL_IF>
