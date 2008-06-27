@@ -11,7 +11,7 @@ use Carp qw(cluck confess);
 
 use DBI;
 
-use WakeUpManager::Common::Utils;
+use WakeUpManager::Common::Utils qw(:timetable);
 
 my $true  = (1 == 1);
 my $false = (1 != 1);
@@ -1453,6 +1453,129 @@ sub _get_hostgroups_using_admin_config_set_worker ($$$$$) { # get_hostgroupss_us
 		}
 	}
 } # }}}
+
+
+sub update_timetable_of_host ($$) { # update_timetable_of_host (host_id, \%times_list) {{{
+	my $self = shift;
+
+	my $host_id = shift;
+	my $times_list = shift;
+
+	if (ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->update_timetable_of_host(): Has to be called on bless'ed object.\n";
+	}
+
+	return -1 if (! $self->is_valid_host ($host_id));
+	return -2 if (ref ($times_list) ne 'HASH');
+
+	#
+	# Start TRANSACTION here as we may do harmful things
+	$self->{db_h}->begin_work ();
+
+	my $sth_cs = $self->{db_h}->prepare ("
+		SELECT
+			host_id, h.csid
+		FROM	host h,
+			config_set c
+		WHERE		h.host_id = :host_id
+			AND	h.csid = c.csid
+			AND	c.preset = 'f'
+			AND	c.administrative = 'f'
+	");
+	$sth_cs->bind_param (":host_id", $host_id);
+	$sth_cs->execute ();
+
+	my $row_count = $sth_cs->rows ();
+	my @row = $sth_cs->fetchrow ();
+	my $csid = $row[1];
+
+	# If the result only contains one row, this has to be the host...
+	# ...but who knows... better check it twice.
+	if ($row_count == 1 && $row[0] == $host_id) {
+
+		# Delete all entries from the times table
+		my $sth_drop_times = $self->{db_h}->prepare ("
+			DELETE FROM	times
+			WHERE		csid = :csid
+		");
+		$sth_drop_times->bind_param (":csid", $csid);
+		$sth_drop_times->execute ();
+	} else {
+		# XXX FIXME XXX
+		#
+		# Why ever does this not work when using parameters...
+		my $sth_cs_new = $self->{db_h}->prepare ("
+			INSERT INTO config_set
+					(name)
+			VALUES		('CS for #$host_id')
+		") or die;
+#		$sth_cs_new->bind_param (":name", "CS for #$host_id");
+		$sth_cs_new->execute ();
+		@row = $sth_cs_new->fetchrow ();
+
+		if (! $row[0]) {
+			$self->{db_h}->rollback ();
+			return -3;
+		}
+
+		$csid = $row[0];
+	}
+
+	my $sth_insert_time = $self->{db_h}->prepare ("
+		INSERT INTO	times
+			(csid, day, time, action)
+		VALUES	(:csid, :day, :time, :action)
+	");
+	$sth_insert_time->bind_param (":csid", $csid);
+
+	for (my $n = 1; $n <= 7; $n++) {
+		my $day_name = dow_to_day ($n);
+		my $day_list = $times_list->{$day_name};
+
+		if ($day_list && scalar (@{$day_list})) {
+			$sth_insert_time->bind_param (":day", $day_name);
+
+			foreach my $item (@{$day_list}) {
+				foreach my $type (qw(boot shutdown)) {
+					my $valid = 0;
+
+					my $value = $item->{$type};
+					if ($value =~ m/^[0-2]?[0-9]:[0-5][0-9]:[0-2]?[0-9]$/) {
+						# Strip seconds
+						$value =~ s/:[0-9]{2}$//;
+					}
+					if ($value =~ m/^([0-2]?[0-9]):([0-5]?[0-9])$/) {
+						if ($1 >= 0 && $1 < 24 && $2 >= 0 && $2 < 59) {
+							$valid = 1;
+						}
+					}
+
+					if (! $valid) {
+						$self->{db_h}->rollback ();
+						return -4;
+					}
+
+					# Insert entry
+					$sth_insert_time->bind_param (":time", $item->{$type});
+					$sth_insert_time->bind_param (":action", $type);
+					$sth_insert_time->execute ();
+				}
+			}
+		}
+	}
+
+	my $sth_update_host = $self->{db_h}->prepare ("
+		UPDATE	host
+		SET	csid = :csid
+		WHERE	host_id = :host_id
+	");
+	$sth_update_host->bind_param (":csid", $csid);
+	$sth_update_host->bind_param (":host_id", $host_id);
+	$sth_update_host->execute ();
+
+	$self->{db_h}->commit ();
+} # }}}
+
 
 1;
 
