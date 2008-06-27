@@ -11,7 +11,7 @@ use Carp qw(cluck confess);
 
 use DBI;
 
-use WakeUpManager::Common::Utils qw(:timetable);
+use WakeUpManager::Common::Utils qw(:time);
 
 my $true  = (1 == 1);
 my $false = (1 != 1);
