@@ -57,7 +57,7 @@ my $result_message = { # {{{
 		de => 'Es ist ein Fehler aufgetreten, die Daten wurden <i>nicht</i> gespeichert',
 	},
 
-	unchanded => {
+	unchanged => {
 		en => 'Timetable did not change, not updating database.',
 		de => 'Der Zeitplan wurde nicht ver&auml;ndert, Datenbank wird nicht aktualisiert.',
 	},
@@ -178,25 +178,26 @@ sub get_content_elements () {
 	}
 
 	#
-	# Get times list
-	my $times_list;
+	# Get times from database
+	my $timetable_from_db = $host_db->get_times_of_host ($host_id);
+	if (! $timetable_from_db) {
+		return { error => 1,
+		         cant_read_timetable => 1,
+		         hostname => $host_name,
+		};
+	}
+	my $times_list_from_db = sanitize_times_list (get_times_list ($timetable_from_db));
+	if (! $times_list_from_db) {
+		 return { error => 1,
+		          cant_read_timetable => 1,
+		};
+	}
 
 	# Called from somewhere else without FORM data?
+	my $times_list;
 	if (! $submitted) {
-		my $timetable = $host_db->get_times_of_host ($host_id);
-		if (! $timetable) {
-			return { error => 1,
-			         cant_read_timetable => 1,
-			         hostname => $host_name,
-			};
-		}
+		$times_list = $times_list_from_db;
 
-		$times_list = get_times_list ($timetable);
-		if (! $times_list) {
-			 return { error => 1,
-			          cant_read_timetable => 1,
-			};
-		}
 	}
 
 	# User submitted data.
@@ -223,7 +224,7 @@ sub get_content_elements () {
 			push @{$times_list->{$day}}, { boot => $boot_time, 'shutdown' => $shutdown_time };
 		}
 
-		$times_list = order_times_list ($times_list);
+		$times_list = sanitize_times_list (order_times_list ($times_list));
 	}
 
 
@@ -238,12 +239,22 @@ sub get_content_elements () {
 	$content_elements->{timetable} = $table_data->{timetable};
 
 	if ($submitted && $table_data->{error_count} == 0) {
-		my $ret = $host_db->update_timetable_of_host ($host_id, $times_list);
-
-		if ($ret == 1) {
-			$content_elements->{result} = $result_message->{saved}->{$lang};
-		} else {
+		my $equal_times_lists = equal_times_lists ($times_list_from_db, $times_list);
+		if (! defined $equal_times_lists) {
 			$content_elements->{result} = $result_message->{error}->{$lang};
+			return $content_elements;
+		}
+
+		if ($equal_times_lists) {
+			$content_elements->{result} = $result_message->{unchanged}->{$lang};
+		} else {
+			my $ret = $host_db->update_timetable_of_host ($host_id, $times_list);
+
+			if ($ret == 1) {
+				$content_elements->{result} = $result_message->{saved}->{$lang};
+			} else {
+				$content_elements->{result} = $result_message->{error}->{$lang};
+			}
 		}
 	}
 
