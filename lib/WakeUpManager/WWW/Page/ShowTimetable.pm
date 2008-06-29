@@ -4,7 +4,7 @@
 #  --  Thu May 29 20:20:06 2008
 #
 
-package WakeUpManager::WWW::Page::ShowConfig;
+package WakeUpManager::WWW::Page::ShowTimetable;
 
 use strict;
 use Carp qw(cluck confess);
@@ -83,7 +83,7 @@ sub get_header_elements () {
 	return {
 		h2 => $h2,
 
-		header_opt => "<script src=\"/ui/inc/ShowConfig.js\" type=\"text/javascript\"></script>",
+		header_opt => "<script src=\"/ui/inc/ShowTimetable.js\" type=\"text/javascript\"></script>",
 	};
 }
 
