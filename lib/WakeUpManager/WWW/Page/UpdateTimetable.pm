@@ -324,27 +324,28 @@ sub gen_table_from_timestable ($) { # gen_table_from_timestable (times_list) : H
 			}
 			# }}}
 
-			#
-			# Check if boot time is smaller than shutdown time # {{{
-			my @boot_times = split (':', $boot_time);
-			my @shutdown_times = split (':', $shutdown_time);
+			# If both times are valid, check for content level errors
+			if ($valid_boot_time && $valid_shutdown_time) {
+				# Check if boot time is smaller than shutdown time # {{{
+				my @boot_times = split (':', $boot_time);
+				my @shutdown_times = split (':', $shutdown_time);
+	
+				my $boot_minutes = $boot_times[0] * 60 + $boot_times[1];
+				my $shutdown_minutes = $shutdown_times[0] * 60 + $shutdown_times[1];
+	
+				if ($shutdown_minutes - $boot_minutes < 30) {
+					push @errors, $self->get_error_msg ('boot_after_shutdown');
+				}
+				# }}}
 
-			my $boot_minutes = $boot_times[0] * 60 + $boot_times[1];
-			my $shutdown_minutes = $shutdown_times[0] * 60 + $shutdown_times[1];
-
-			if ($shutdown_minutes - $boot_minutes < 30) {
-				push @errors, $self->get_error_msg ('boot_after_shutdown');
+				# Check for overlapping entries {{{
+				if (defined $last_shutdown_minutes && $last_shutdown_minutes >= $boot_minutes) {
+					push @errors, $self->get_error_msg ('overlapping_entries');
+				} else {
+					$last_shutdown_minutes = $shutdown_minutes
+				}
+				# }}}
 			}
-			# }}}
-
-			#
-			# Check for overlapping entries {{{
-			if (defined $last_shutdown_minutes && $last_shutdown_minutes >= $boot_minutes) {
-				push @errors, $self->get_error_msg ('overlapping_entries');
-			} else {
-				$last_shutdown_minutes = $shutdown_minutes
-			}
-			# }}}
 
 			$table .= "\t   <tr>\n";
 			$table .= "\t    <td>\n";
