@@ -10,10 +10,10 @@ use strict;
 use base 'Exporter';
 
 our @EXPORT    = qw();
-our @EXPORT_OK = qw(string2time dow_to_day get_times_list get_times_by_hour get_host_state order_times_list);
+our @EXPORT_OK = qw(string2time dow_to_day get_times_list get_times_by_hour get_host_state order_times_list equal_times_lists sanitize_times_list);
 our %EXPORT_TAGS = (
 	time => [qw(string2time dow_to_day)],
-	timetable => [qw(get_times_list get_times_by_hour order_times_list)],
+	timetable => [qw(get_times_list get_times_by_hour order_times_list equal_times_lists sanitize_times_list)],
 	state => [qw(get_host_state)],
 	all => \@EXPORT_OK
 );
@@ -343,7 +343,6 @@ sub get_host_state ($;$) { # get_current_host_state (\%timetable ; $window_width
 	return "shutdown";
 } # }}}
 
-
 sub order_times_list ($) { # order_times_list (\%times_list) : \%times_list {{{
 	my $times_list = shift;
 
@@ -395,6 +394,118 @@ sub _by_boot_time () { # {{{
 	else {
 		return 1;
 	}
+} # }}}
+
+sub sanitize_times_list ($) { # {{{ sanitize_times_list (\%times_list) : \%times_list {{{
+	my $times_list = shift;
+
+	if (ref ($times_list) ne 'HASH') {
+		return undef;
+	}
+
+	for (my $n = 1; $n <= 7; $n++) {
+		my $day_name = dow_to_day ($n);
+		if (! $day_name) {
+			return undef;
+		}
+
+		if (! $times_list->{$day_name}) {
+			$times_list->{$day_name} = [];
+			next;
+		}
+
+		foreach my $item (@{$times_list->{$day_name}}) {
+			if (ref ($item) ne 'HASH') {
+				return undef;
+			}
+
+			if ($item->{boot} =~ m/^[0-2]?[0-9]:[0-5][0-9]:[0-2]?[0-9]$/) {
+				# Strip seconds
+				$item->{boot} =~ s/:[0-9]{2}$//;
+			}
+
+			if ($item->{shutdown} =~ m/^[0-2]?[0-9]:[0-5][0-9]:[0-2]?[0-9]$/) {
+				# Strip seconds
+				$item->{shutdown} =~ s/:[0-9]{2}$//;
+			}
+		}
+	}
+
+	return $times_list;
+} # }}}
+
+#
+# Compare to times_lists
+#
+sub equal_times_lists ($$) { # equal_times_lists (\%times_list, \%times_list) : undef / 0/1 # {{{
+	my $list_one = shift;
+	my $list_two = shift;
+
+	if (ref ($list_one) ne 'HASH' || ref ($list_two) ne 'HASH') {
+		return undef;
+	}
+
+	# Make stuff a bit simpler...
+	$list_one = order_times_list ($list_one);
+	$list_two = order_times_list ($list_two);
+
+	for (my $n = 1; $n <= 7; $n++) {
+		my $day_name = dow_to_day ($n);
+		if (! $day_name) {
+			return undef;
+		}
+
+		# If there's nothing to compare, go on
+		if (! $list_one->{$day_name} && ! $list_two->{$day_name}) {
+			next;
+		}
+
+		# At least one day list has to exist now, exists both?
+		if (! $list_one->{$day_name} || ! $list_two->{$day_name}) {
+			if (! $list_one->{$day_name} && $list_two->{$day_name} &&
+			    scalar (@{$list_two->{$day_name}}) == 0) {
+				next;
+			}
+
+			if ($list_one->{$day_name} && ! $list_two->{$day_name} &&
+			    scalar (@{$list_one->{$day_name}}) == 0) {
+				next;
+			}
+
+			return 0;
+		}
+
+		# Are the lists valid lists?
+		if (ref ($list_one->{$day_name}) ne 'ARRAY' || ref ($list_one->{$day_name}) ne 'ARRAY') {
+				return undef;
+		}
+
+		my @day_list_one = @{$list_one->{$day_name}};
+		my @day_list_two = @{$list_two->{$day_name}};
+
+		# If the number of elements differs, the lists differ.
+		if (scalar (@day_list_one) != scalar (@day_list_two)) {
+			return 0;
+		}
+
+		for (my $i = 0; $i < scalar (@day_list_one); $i++) {
+			my $hash_one = $day_list_one[$i];
+			my $hash_two = $day_list_two[$i];
+
+			# If the list entries aren't hashes, somethings is wrong
+			if (ref ($hash_one) ne 'HASH' || ref ($hash_two) ne 'HASH') {
+				return undef;
+			}
+
+			# Check for differenting values.
+			if ($hash_one->{boot} ne $hash_two->{boot} ||
+			    $hash_one->{shutdown} ne $hash_two->{shutdown}) {
+			    return 0;
+			}
+		}
+	}
+
+	return 1;
 } # }}}
 
 1;
