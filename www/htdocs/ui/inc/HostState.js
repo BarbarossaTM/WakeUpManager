@@ -18,8 +18,8 @@
 
 		var errormsg = "<span class='error'>Rechnerkonfiguration konnte nicht geladen werden!</span>";
 
-		var option_index = document.forms.host_state.elements.host.selectedIndex;
-		var hostname = document.forms.host_state.host.options[option_index].text;
+		var option_index = document.forms.host_state.elements.host_id.selectedIndex;
+		var hostname = document.forms.host_state.host_id.options[option_index].text;
 
 		// Ergebnisbox mit <div id='result_box'> malen und mit Ladebildchen bestuecken
 		document.getElementById('result').innerHTML = "<div class='box'><div class='box_head'>&raquo; Aktivierungsstatus f&uuml;r Rechner " + hostname + "</div><div class='box_content' id='result_box'>" +
