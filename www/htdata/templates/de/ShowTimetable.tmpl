@@ -12,11 +12,11 @@
 	 <form name="show_config_form" action="" method="POST">
 
 	  <p>
-	   W&auml;hlen Sie den Rechner, dessen Konfiguration sie einsehen m&ouml;chten.
+	   W&auml;hlen Sie den Rechner, dessen Zeitplan sie einsehen m&ouml;chten.
 	  </p>
 
 	  <div class="box">
-	   <div class="box_head">&raquo; Konfiguration anzeigen</div>
+	   <div class="box_head">&raquo; Zeitplan anzeigen</div>
 	   <div class="box_content">
 
 	    <div id='host_select'>
@@ -40,7 +40,7 @@
 	     </p>
 	    </TMPL_IF>
 
-	    <input type="button" value='Konfiguration anzeigen' onClick="showConfig();">
+	    <input type="button" value='Zeitplan anzeigen' onClick="showConfig();">
 	   </div>
 	  </div>
 	  <!-- box end //-->
@@ -52,6 +52,6 @@
 	<!-- Ok, the user does NOT have the right to read the config of any host //-->
 	<TMPL_ELSE>
 	 <p>
-	  Sie haben nicht das Recht die Startzeiten eines Rechners einzusehen.
+	  Sie haben nicht das Recht den Zeitplan eines Rechners einzusehen.
 	 </p>
 	</TMPL_IF>

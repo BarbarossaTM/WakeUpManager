@@ -10,8 +10,8 @@
 	   Fehler: Parameter 'host_id' nicht angegeben.
 	 </TMPL_IF>
 
-	 <TMPL_IF user_not_allowed>
-	   Sie haben nicht das Recht die Startzeiten des Rechners <TMPL_VAR hostname> zu &auml;ndern.
+	 <TMPL_IF user_not_allowed_for_host>
+	   Sie haben nicht das Recht den Zeitplan des Rechners <TMPL_VAR hostname> zu &auml;ndern.
 	 </TMPL_IF>
 
 	 <TMPL_IF cant_read_timetable>
@@ -29,11 +29,11 @@
 	  <input type="hidden" name="submitted" value="0">
 
 	  <p>
-	   W&auml;hlen Sie den Rechner, dessen Konfiguration sie einsehen m&ouml;chten.
+	   W&auml;hlen Sie den Rechner, dessen Zeitplan sie &auml;ndern m&ouml;chten.
 	  </p>
 
 	  <div class="box">
-	   <div class="box_head">&raquo; Konfiguration anzeigen</div>
+	   <div class="box_head">&raquo; Zeitplan laden</div>
 	   <div class="box_content">
 
 	    <div id='host_select'>
@@ -57,19 +57,16 @@
 	     </p>
 	    </TMPL_IF>
 
-	    <input type="submit" value='Konfiguration anzeigen'>
+	    <input type="submit" value='Zeitplan laden'>
 	   </div>
 	  </div>
 	  <!-- box end //-->
 	 </form>
-
-	<!-- Ok, the user does NOT have the right to read the config of any host //-->
 	<TMPL_ELSE>
-	 <p>
-	  Sie haben nicht das Recht die Startzeiten eines Rechners zu &auml;ndern.
-	 </p>
+	 <TMPL_UNLESS timetable>
+	  <p><i>Sie haben nicht das Recht den Zeitplan eines Rechners zu &auml;ndern</i></p>
+	 </TMPL_UNLESS>
 	</TMPL_IF>
-
 
 
 	 <!-- If the user has the right to read the config of least on host //-->
@@ -98,4 +95,5 @@
 	   </TMPL_IF>
 	  </div>
 	 </TMPL_IF>
+
 	</TMPL_IF>

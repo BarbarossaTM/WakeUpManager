@@ -168,8 +168,8 @@ sub get_content_elements () {
 	my $host_id = $params->get_http_param ('host_id');
 
 	if (! defined $host_id) {
-		my $allowed_hostgroups = $self->{host_db_h}->hostgroups_user_can_read_config ($user);
-		my $allowed_hosts = $self->{host_db_h}->hosts_user_can_read_config ($user);
+		my $allowed_hostgroups = $self->{host_db_h}->hostgroups_user_can_write_config ($user);
+		my $allowed_hosts = $self->{host_db_h}->hosts_user_can_write_config ($user);
 
 		# The really cool version of output formatting[tm]
 		my $ALL_hostgroup_id = $self->{host_db_h}->get_hostgroup_id ('ALL');
@@ -190,7 +190,7 @@ sub get_content_elements () {
 		# Check rights
 		if (! $host_db->user_can_write_host_config ($user, $host_id)) {
 			return { error => 1,
-			         user_not_allowed => 1,
+			         user_not_allowed_for_host => 1,
 			         hostname => $host_name,
 			};
 		}
@@ -209,6 +209,7 @@ sub get_content_elements () {
 		if (! $times_list_from_db) {
 			 return { error => 1,
 			          cant_read_timetable => 1,
+			         hostname => $host_name,
 			};
 		}
 

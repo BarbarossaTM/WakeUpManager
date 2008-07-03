@@ -10,7 +10,7 @@
 	   Error: Parameter 'host_id' missing.
 	 </TMPL_IF>
 
-	 <TMPL_IF user_not_allowed>
+	 <TMPL_IF user_not_allowed_for_host>
 	   You are not allowed to update the timetable of host <TMPL_VAR hostname>.
 	 </TMPL_IF>
 
@@ -60,12 +60,10 @@
 	  </div>
 	  <!-- box end //-->
 	 </form>
-
-	<!-- Ok, the user does NOT have the right to read the config of any host //-->
 	<TMPL_ELSE>
-	 <p>
-	  You are not allowed to update the timetable of a host.
-	 </p>
+	 <TMPL_UNLESS>
+	  <p><i>You are not allowed to update the timetable of a host.</i></p>
+	 </TMPL_UNLESS>
 	</TMPL_IF>
 
 
