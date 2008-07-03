@@ -132,6 +132,8 @@ sub get_header_elements () {
 
 	return {
 		h2 => $h2,
+
+		header_opt => "<script src=\"/ui/inc/UpdateTimetable.js\" type=\"text/javascript\"></script>",
 	};
 }
 
@@ -147,6 +149,9 @@ sub get_content_elements () {
 	}
 	my $host_db = $self->{host_db_h};
 
+	# Result hash
+	my $content_elements = {};
+
 	my $params = $self->{params};
 
 	my $lang = $params->get_lang ();
@@ -159,101 +164,113 @@ sub get_content_elements () {
 	my $user = $params->get_auth_info()->{user};
 	my $submitted = $params->get_http_param ('submitted');
 
-	# Get host_id parameter
+	# Get host_id parameter (if set)
 	my $host_id = $params->get_http_param ('host_id');
+
 	if (! defined $host_id) {
-		return { error => 1,
-		         no_host_id => 1, };
-	}
+		my $allowed_hostgroups = $self->{host_db_h}->hostgroups_user_can_read_config ($user);
+		my $allowed_hosts = $self->{host_db_h}->hosts_user_can_read_config ($user);
 
-	# Get hostname for error messages
-	my $host_name = $host_db->get_host_name ($host_id) || "#$host_id";
-
-	# Check rights
-	if (! $host_db->user_can_write_host_config ($user, $host_id)) {
-		return { error => 1,
-		         user_not_allowed => 1,
-		         hostname => $host_name,
-		};
-	}
-
-	#
-	# Get times from database
-	my $timetable_from_db = $host_db->get_times_of_host ($host_id);
-	if (! $timetable_from_db) {
-		return { error => 1,
-		         cant_read_timetable => 1,
-		         hostname => $host_name,
-		};
-	}
-	my $times_list_from_db = sanitize_times_list (get_times_list ($timetable_from_db));
-	if (! $times_list_from_db) {
-		 return { error => 1,
-		          cant_read_timetable => 1,
-		};
-	}
-
-	# Called from somewhere else without FORM data?
-	my $times_list;
-	if (! $submitted) {
-		$times_list = $times_list_from_db;
-
-	}
-
-	# User submitted data.
-	else {
-		$times_list = {};
-
-		for (my $n = 1; 1; $n++) {
-			my $day = $params->get_http_param ("day$n");
-			if (! $day) {
-				last;
-			}
-
-			if ($day eq '--') {
-				next;
-			}
-
-			my $boot_time = $params->get_http_param ("boot$n");
-			my $shutdown_time = $params->get_http_param ("shutdown$n");
-
-			if (! $times_list->{$day}) {
-				$times_list->{$day} = [];
-			}
-
-			push @{$times_list->{$day}}, { boot => $boot_time, 'shutdown' => $shutdown_time };
+		# The really cool version of output formatting[tm]
+		my $ALL_hostgroup_id = $self->{host_db_h}->get_hostgroup_id ('ALL');
+		if ($ALL_hostgroup_id) {
+			my $hostgroup_tree = $self->{host_db_h}->get_hostgroup_tree_below_group ($ALL_hostgroup_id);
+			$content_elements->{hostgroup_loop} = WakeUpManager::WWW::Utils->gen_pretty_hostgroup_tree_select ($hostgroup_tree, $allowed_hostgroups);
 		}
 
-		$times_list = sanitize_times_list (order_times_list ($times_list));
-	}
-
-
-	my $content_elements = {
-		hostname => $host_name,
-		hidden_form_data => "\t  <input type=\"hidden\" name=\"host_id\" value=\"$host_id\">
-\t  <input type=\"hidden\" name=\"submitted\" value=\"1\">\n",
-	};
-
-	my $table_data = $self->gen_table_from_timestable ($times_list);
-
-	$content_elements->{timetable} = $table_data->{timetable};
-
-	if ($submitted && $table_data->{error_count} == 0) {
-		my $equal_times_lists = equal_times_lists ($times_list_from_db, $times_list);
-		if (! defined $equal_times_lists) {
-			$content_elements->{result} = $result_message->{error}->{$lang};
-			return $content_elements;
+		if ($allowed_hosts) {
+			$content_elements->{host_loop} = WakeUpManager::WWW::Utils->gen_pretty_host_select ($allowed_hosts);
 		}
 
-		if ($equal_times_lists) {
-			$content_elements->{result} = $result_message->{unchanged}->{$lang};
-		} else {
-			my $ret = $host_db->update_timetable_of_host ($host_id, $times_list);
+	} else {
+		# Get hostname for error messages
+		my $host_name = $host_db->get_host_name ($host_id) || "#$host_id";
+		$content_elements->{hostname} = $host_name;
 
-			if ($ret == 1) {
-				$content_elements->{result} = $result_message->{saved}->{$lang};
-			} else {
+		# Check rights
+		if (! $host_db->user_can_write_host_config ($user, $host_id)) {
+			return { error => 1,
+			         user_not_allowed => 1,
+			         hostname => $host_name,
+			};
+		}
+
+
+		#
+		# Get times from database
+		my $timetable_from_db = $host_db->get_times_of_host ($host_id);
+		if (! $timetable_from_db) {
+			return { error => 1,
+			         cant_read_timetable => 1,
+			         hostname => $host_name,
+			};
+		}
+		my $times_list_from_db = sanitize_times_list (get_times_list ($timetable_from_db));
+		if (! $times_list_from_db) {
+			 return { error => 1,
+			          cant_read_timetable => 1,
+			};
+		}
+
+		# Called from somewhere else without FORM data?
+		my $times_list;
+		if (! $submitted) {
+			$times_list = $times_list_from_db;
+
+		}
+
+		# User submitted data.
+		else {
+			$times_list = {};
+
+			for (my $n = 1; 1; $n++) {
+				my $day = $params->get_http_param ("day$n");
+				if (! $day) {
+					last;
+				}
+
+				if ($day eq '--') {
+					next;
+				}
+
+				my $boot_time = $params->get_http_param ("boot$n");
+				my $shutdown_time = $params->get_http_param ("shutdown$n");
+
+				if (! $times_list->{$day}) {
+					$times_list->{$day} = [];
+				}
+
+				push @{$times_list->{$day}}, { boot => $boot_time, 'shutdown' => $shutdown_time };
+			}
+
+			$times_list = sanitize_times_list (order_times_list ($times_list));
+		}
+
+
+		$content_elements->{hidden_form_data} = "\t  <input type=\"hidden\" name=\"host_id\" value=\"$host_id\">
+	\t  <input type=\"hidden\" name=\"submitted\" value=\"1\">\n";
+
+		my $table_data = $self->gen_table_from_timestable ($times_list);
+
+		$content_elements->{timetable} = $table_data->{timetable};
+
+		if ($submitted && $table_data->{error_count} == 0) {
+			my $equal_times_lists = equal_times_lists ($times_list_from_db, $times_list);
+			if (! defined $equal_times_lists) {
 				$content_elements->{result} = $result_message->{error}->{$lang};
+				return $content_elements;
+			}
+
+			if ($equal_times_lists) {
+				$content_elements->{result} = $result_message->{unchanged}->{$lang};
+			} else {
+				my $ret = $host_db->update_timetable_of_host ($host_id, $times_list);
+
+				if ($ret == 1) {
+					$content_elements->{result} = $result_message->{saved}->{$lang};
+				} else {
+					$content_elements->{result} = $result_message->{error}->{$lang};
+				}
 			}
 		}
 	}
@@ -340,10 +357,10 @@ sub gen_table_from_timestable ($) { # gen_table_from_timestable (times_list) : H
 				# Check if boot time is smaller than shutdown time # {{{
 				my @boot_times = split (':', $boot_time);
 				my @shutdown_times = split (':', $shutdown_time);
-	
+
 				my $boot_minutes = $boot_times[0] * 60 + $boot_times[1];
 				my $shutdown_minutes = $shutdown_times[0] * 60 + $shutdown_times[1];
-	
+
 				if ($shutdown_minutes - $boot_minutes < 30) {
 					push @errors, $self->get_error_msg ('boot_after_shutdown');
 				}
