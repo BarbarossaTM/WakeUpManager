@@ -326,7 +326,7 @@ sub gen_table_from_timestable ($) { # gen_table_from_timestable (times_list) : H
 				$boot_time =~ s/:[0-9]{2}$//;
 			}
 			if ($boot_time =~ m/^([0-2]?[0-9]):([0-5]?[0-9])$/) {
-				if ($1 >= 0 && $1 < 24 && $2 >= 0 && $2 < 59) {
+				if ($1 >= 0 && $1 < 24 && $2 >= 0 && $2 <= 59) {
 					$valid_boot_time = 1;
 				}
 			}
