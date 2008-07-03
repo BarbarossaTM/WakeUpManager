@@ -266,6 +266,7 @@ sub _gen_menu () { # _gen_menu () : HTML_string for menu {{{
 	if ($lang eq 'de') {
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=BootHost\">Rechner starten</a><br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=ShowTimetable\">Zeitplan anzeigen</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=UpdateTimetable\">Zeitplan &auml;ndern</a><br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=HostState\">Aktivierungsstatus</a><br>\n";
 		$menu_HTML_string .= "\t  <br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=Preferences\">Einstellungen</a><br>\n";
@@ -274,6 +275,7 @@ sub _gen_menu () { # _gen_menu () : HTML_string for menu {{{
 	} else {
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=BootHost\">Boot host</a><br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=ShowTimetable\">Show timetable</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=UpdateTimetable\">Update timetable</a><br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=HostState\">Host activation state</a><br>\n";
 		$menu_HTML_string .= "\t  <br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=Preferences\">Preferences</a><br>\n";
