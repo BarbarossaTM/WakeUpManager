@@ -14,7 +14,7 @@
 	}
 
 	function loadHostState(){
-		var url = '/ui/ajax/get_host_state?host_id=' + document.getElementsByName('host')[0].value;
+		var url = '/ui/ajax/get_host_state?host_id=' + document.getElementsByName('host_id')[0].value;
 
 		var errormsg = "<span class='error'>Rechnerkonfiguration konnte nicht geladen werden!</span>";
 
@@ -33,7 +33,7 @@
 		var boot_host = document.forms.host_state_form2.elements.boot_host.checked;
 		var shutdown_host = document.forms.host_state_form2.elements.shutdown_host.checked;
 
-		var url = '/ui/ajax/set_host_state?host_id=' + document.getElementsByName('host')[0].value + '&boot_host=' + boot_host + '&shutdown_host=' + shutdown_host;
+		var url = '/ui/ajax/set_host_state?host_id=' + document.getElementsByName('host_id')[0].value + '&boot_host=' + boot_host + '&shutdown_host=' + shutdown_host;
 
 		var errormsg = "<span class='error'>Rechnerkonfiguration konnte nicht gespeichert werden!</span>";
 

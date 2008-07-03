@@ -15,7 +15,7 @@
 
 
 	function showConfig(){
-		var url = '/ui/ajax/get_time_table_for_host?host_id=' + document.getElementsByName('host')[0].value;
+		var url = '/ui/ajax/get_time_table_for_host?host_id=' + document.getElementsByName('host_id')[0].value;
 
 		var errormsg = "<span class='error'>Rechnerkonfiguration konnte nicht geladen werden!</span>";
 

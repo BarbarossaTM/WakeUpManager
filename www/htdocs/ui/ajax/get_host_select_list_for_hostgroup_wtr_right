@@ -47,7 +47,7 @@ if ($hg_name && $hg_name eq 'ALL') {
 }
 
 if (keys %{$hosts} > 0) {
-	print "<select name='host'>\n";
+	print "<select name='host_id'>\n";
 
 	my $hosts_list = WakeUpManager::WWW::Utils->gen_pretty_host_select ($hosts);
 	foreach my $item (@{$hosts_list}) {

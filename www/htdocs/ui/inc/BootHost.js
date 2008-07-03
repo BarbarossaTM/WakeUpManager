@@ -14,7 +14,7 @@
 	}
 
 	function bootHost(){
-		var url = '/ui/ajax/boot_host?host_id=' + document.getElementsByName('host')[0].value;
+		var url = '/ui/ajax/boot_host?host_id=' + document.getElementsByName('host_id')[0].value;
 
 		var errormsg = "<span class='error'>Es ist ein Fehler aufgetreten!</span>";
 
