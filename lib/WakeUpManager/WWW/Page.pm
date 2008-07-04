@@ -7,7 +7,10 @@
 package WakeUpManager::WWW::Page;
 
 use strict;
-use Carp;
+use Carp qw(cluck confess);
+
+use WakeUpManager::Config;
+use WakeUpManager::DB::HostDB;
 
 use HTML::Template;
 
@@ -52,6 +55,16 @@ sub new () { # new () :  {{{
 		confess __PACKAGE__ . "->new(): No or invalid 'params' argument.\n";
 	}
 
+        # Read wum.conf
+	my $wum_config = WakeUpManager::Config-> new (config_file => "/etc/wum/wum.conf");
+	if (! $wum_config) {
+		cluck __PACKAGE__ . "->new(): Could not get 'wum_config'...";
+		return undef;
+	}
+
+	# Setup DB handle but don't check it here!
+	my $host_db_h = WakeUpManager::DB::HostDB-> new (dbi_param => $wum_config->get_dbi_param ('HostDB'));
+
 	#
 	# Create page instance
 	my $obj = bless {
@@ -59,6 +72,8 @@ sub new () { # new () :  {{{
 		verbose => $verbose,
 
 		params => $args->{params},
+		wum_config => $wum_config,
+		host_db_h => $host_db_h,
 
 		templates => {},
 	}, $class;
@@ -263,20 +278,42 @@ sub _gen_menu () { # _gen_menu () : HTML_string for menu {{{
 	my $lang = $self->{params}->get_lang ();
 	my $menu_HTML_string = "\t  <div class=\"three_em\">\n";
 
+	my $user = $self->{params}->get_auth_info()->{user};
+
+	my $user_can_boot_hosts = 1;
+	my $user_can_read_host_config = 1;
+	my $user_can_write_host_config = 1;
+	eval {
+		my $temp;
+
+		$temp = $self->{host_db_h}->hosts_user_can_boot ($user);
+		$user_can_boot_hosts = (keys %{$temp} != 0);
+
+		$temp =  $self->{host_db_h}->hosts_user_can_read_config ($user);
+		$user_can_read_host_config = (keys %{$temp} != 0);
+
+		$temp =  $self->{host_db_h}->hosts_user_can_write_config ($user);
+		$user_can_write_host_config = (keys %{$temp} != 0);
+
+		if ($user_can_write_host_config) {
+			$user_can_read_host_config = 1;
+		}
+	};
+
 	if ($lang eq 'de') {
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=BootHost\">Rechner starten</a><br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=ShowTimetable\">Zeitplan anzeigen</a><br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=UpdateTimetable\">Zeitplan &auml;ndern</a><br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=HostState\">Aktivierungsstatus</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=BootHost\">Rechner starten</a><br>\n" if ($user_can_boot_hosts);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=ShowTimetable\">Zeitplan anzeigen</a><br>\n" if ($user_can_read_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=UpdateTimetable\">Zeitplan &auml;ndern</a><br>\n" if ($user_can_write_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=HostState\">Aktivierungsstatus</a><br>\n" if ($user_can_read_host_config);
 		$menu_HTML_string .= "\t  <br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=Preferences\">Einstellungen</a><br>\n";
 		$menu_HTML_string .= "\t  <br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=About\">&Uuml;ber Wake Up Manager</a><br>\n";
 	} else {
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=BootHost\">Boot host</a><br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=ShowTimetable\">Show timetable</a><br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=UpdateTimetable\">Update timetable</a><br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=HostState\">Host activation state</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=BootHost\">Boot host</a><br>\n" if ($user_can_boot_hosts);;
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=ShowTimetable\">Show timetable</a><br>\n" if ($user_can_read_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=UpdateTimetable\">Update timetable</a><br>\n" if ($user_can_write_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=HostState\">Host activation state</a><br>\n" if ($user_can_read_host_config);
 		$menu_HTML_string .= "\t  <br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=Preferences\">Preferences</a><br>\n";
 		$menu_HTML_string .= "\t  <br>\n";
