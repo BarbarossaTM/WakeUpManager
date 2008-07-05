@@ -10,7 +10,7 @@ use strict;
 use base 'Exporter';
 use Carp;
 
-our @EXPORT = qw(gen_pretty_hostgroup_tree_select gen_pretty_hostlist);
+our @EXPORT = qw(gen_pretty_hostgroup_tree_select gen_pretty_hostlist p_error);
 
 
 # No prottyping here...
@@ -91,6 +91,12 @@ sub gen_pretty_host_select ($) { # gen_pretty_host_select (\%hosts) : \@hostlist
 
 	return \@host_list;
 } # }}}
+
+sub p_error ($) {
+	my $error_msg = shift;
+
+	return "<p class=\"error\">$error_msg</p>";
+}
 
 1;
 
