@@ -11,7 +11,8 @@
 
 	<!-- If the user has the right to boot at least on host //-->
 	<TMPL_IF host_loop>
-	 <form name="boot_host" action="" method="POST">
+	 <form name="boot_host" action="index.pl" method="POST">
+	  <input type="hidden" name="page" value="BootHost">
 
 	  <p>
 	   Choose the host to be started and click on the &quot;Boot host&quot; button.
@@ -40,13 +41,21 @@
 	     </p>
 	    </TMPL_IF>
 
-	    <input type="button" value='Boot host' onClick="bootHost();">
+	    <input type="submit" value='Boot host' onmousedown="document.boot_host.action = 'javascript:bootHost();'">
 	   </div>
 	  </div>
 	  <!-- box end //-->
 	 </form>
 
 	 <div id='result'>
+	  <TMPL_IF result>
+	   <div class="box">
+	    <div class="box_head">&raquo; Ergebnis</div>
+	    <div class="box_content">
+	     <TMPL_VAR result>
+	    </div>
+	   </div>
+	  </TMPL_IF>
 	 </div>
 
 	<!-- Ok, the user does NOT have the right to boot any host //-->

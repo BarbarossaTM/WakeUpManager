@@ -1,4 +1,3 @@
-
 	 <p>
 	  Der WakeUpManager bietet die M&ouml;glichkeit, einen Rechner bei Bedarf
 	  unabh&auml;ngig von konfigurierten Zeiten zu starten.
@@ -9,17 +8,11 @@
 	  den gew&uuml;nschten PC aus der Liste aus und klicken Sie auf "Rechner starten."
 	 </p>
 
-<!--
-	 <p>
-	  Die Rechnerliste zeigt alle Rechner, die Sie &uuml;ber das Netz starten d&uuml;rfen. <br>
-	  Um die Liste auf ein eine bestimmt Gruppe von Rechnern (z.B. die PCs eines Pools
-	  oder Ihrer Arbeitsgruppe) zu beschr&auml;nken, w&auml;len Sie ein Gruppe aus. <br>
-	 </p>
-//-->
 
 	<!-- If the user has the right to boot at least on host //-->
 	<TMPL_IF host_loop>
-	 <form name="boot_host" action="" method="POST">
+	 <form name="boot_host" action="index.pl" method="POST">
+	  <input type="hidden" name="page" value="BootHost">
 
 	  <p>
 	   W&auml;hlen Sie den Rechner, der gestartet werden soll und klicken Sie auf &quot;Rechner starten&quot;.
@@ -50,13 +43,21 @@
 	     </p>
 	    </TMPL_IF>
 
-	    <input type="button" value='Rechner starten' onClick="bootHost();">
+	    <input type="submit" value='Rechner starten' onmousedown="document.boot_host.action = 'javascript:bootHost();'">
 	   </div>
 	  </div>
 	  <!-- box end //-->
 	 </form>
 
 	 <div id='result'>
+	  <TMPL_IF result>
+	   <div class="box">
+	    <div class="box_head">&raquo; Ergebnis</div>
+	    <div class="box_content">
+	     <TMPL_VAR result>
+	    </div>
+	   </div>
+	  </TMPL_IF>
 	 </div>
 
 	<!-- Ok, the user does NOT have the right to boot any host //-->
