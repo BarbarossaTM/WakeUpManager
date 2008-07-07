@@ -1545,7 +1545,7 @@ sub update_timetable_of_host ($$) { # update_timetable_of_host (host_id, \%times
 						$value =~ s/:[0-9]{2}$//;
 					}
 					if ($value =~ m/^([0-2]?[0-9]):([0-5]?[0-9])$/) {
-						if ($1 >= 0 && $1 < 24 && $2 >= 0 && $2 < 59) {
+						if ($1 >= 0 && $1 < 24 && $2 >= 0 && $2 <= 59) {
 							$valid = 1;
 						}
 					}
