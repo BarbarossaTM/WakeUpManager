@@ -85,7 +85,7 @@ if (! defined $result || ! rpc_result_ok ($result)) {
 print STDERR "Server reported: " . rpc_get_errmsg ($result) . "\n" if (defined $result);
 	exit 1;
 } else {
-	if ($ENV{'LANG'} =~ m/^de_/) {
+	if (defined $ENV{'LANG'} && $ENV{'LANG'} =~ m/^de_/) {
 		print "Rechner $opt_hostname wird gestartet.\n";
 	} else {
 		print "Host $opt_hostname will be booted.\n";
