@@ -4,18 +4,14 @@
 	  regardless what has been configured.
 	 </p>
 
-	 <p>
-	  To boot up a host over the network now choose the desired host from the list
-	  and click the &quot;Boot host&quot; button.
-	 </p>
-
 	<!-- If the user has the right to boot at least on host //-->
 	<TMPL_IF host_loop>
 	 <form name="boot_host" action="index.pl" method="POST">
 	  <input type="hidden" name="page" value="BootHost">
 
 	  <p>
-	   Choose the host to be started and click on the &quot;Boot host&quot; button.
+	   To boot up a host over the network now choose the desired host from the list
+	   and click the &quot;Boot host&quot; button.
 	  </p>
 
 	  <div class="box">
