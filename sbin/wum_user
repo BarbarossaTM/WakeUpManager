@@ -1,0 +1,157 @@
+#!/usr/bin/perl -WT
+#
+# User management for WakeUpManater
+#
+# Maximilian Wilhelm <max@rfc2324.org>
+#  -- Mon, 23 Jun 2008 15:05:36 +0200
+#
+
+use strict;
+
+use WakeUpManager::Config;
+use WakeUpManager::DB::HostDB;
+
+use DBI;
+use Getopt::Long;
+use Socket;
+
+################################################################################
+#				Configuration				       #
+################################################################################
+
+my $opt_config_file = "/etc/wum/wum.conf";
+my $opt_help;
+my $opt_action = undef;
+my $opt_user = undef;
+my $opt_host = undef;
+my $opt_account_type = undef;
+
+Getopt::Long::Configure ("bundling");
+GetOptions ("help|h"        => \$opt_help,
+            "config|c=s"    => \$opt_config_file,
+	    "action|a=s"    => \$opt_action,
+	    "user|u=s"      => \$opt_user,
+	    "host|H=s"        => \$opt_host,
+	    "account_type|t=s" => \$opt_account_type,
+
+);
+
+
+#
+# Check for options
+if ($opt_help ||
+    ! defined $opt_action || ($opt_action ne 'add' && $opt_action ne 'remove') ||
+    ! defined $opt_user) {
+#    ($opt_action eq 'add' && ((! defined $opt_account_type) || ($opt_account_type eq 'HOST' && ! $opt_host)))) {
+       print STDERR "Usage: wum_user\n";
+       print STDERR "\t--action {add|remove} | -a \n";
+       print STDERR "\t--user username -u\n";
+       print STDERR "\t[--account_type type | -t]\n";
+       print STDERR "\t[--host hostname | -H]\n";
+       print STDERR "\t[--config file_name | -c]\n";
+       print STDERR "\t[--help | -h]\n";
+       print STDERR "\n";
+       print STDERR "Examples:\n";
+       print STDERR "  wum_user -a add -u johndoe -t yourType\n";
+       print STDERR "  wum_user -a add -u johndoe -t HOST -h host.name\n";
+       exit 0;
+}
+
+
+#
+# Read configuration
+my $config = WakeUpManager::Config->new (config_file => $opt_config_file);
+if (! $config) {
+	die "Error: Could not get WakeUpManager::Config.\n";
+}
+
+# Database parameters
+my $dbi_param = $config->get_dbi_param ('HostDB');
+if (! $dbi_param) {
+	die "Error: Could not get DBI param from configuration file \"$opt_config_file\".\n";
+}
+
+
+# Get user management options
+my $user_mgnt_opts = $config->get_mgnt_opts ();
+if (! $user_mgnt_opts) {
+	die "Error: You have to define 'USER_MGNT' options in \"$opt_config_file\".\n";
+}
+
+my $account_types = $user_mgnt_opts->{account_types};
+if (ref ($account_types) ne 'HASH') {
+	die "Error: Invalid value for 'USER_MGNT->account_types' parameter. Hash to be a hashref.\n";
+}
+
+# Detect badness
+if ($opt_action eq 'add') {
+	if (! defined $opt_account_type) {
+		die "Error: Account type has to be given when adding a user.\n";
+	}
+
+	if ($opt_account_type eq 'HOST') {
+		if (! defined $opt_host) {
+			die "Error: You have to specify a host when using account type 'HOST'.\n";
+		}
+
+		my ($name, $aliases, $addrtype, $length, @addrs) = gethostbyname ($opt_host);
+		if (! $name) {
+			die "Error: Could not find FQDN for host \"$opt_host\"\n";
+		}
+		$opt_host = $name;
+
+	# Check if the account type is specifed in the configuration
+	} else {
+		if (! defined $account_types->{$opt_account_type}) {
+			die "Error: No account types defined in configuration file \"$opt_config_file\".\n";
+		}
+
+		if (ref ($account_types->{$opt_account_type} ne 'ARRAY')) {
+			die "Account type \"$opt_account_type\" not known or not configured correctly.\n";
+		}
+	}
+}
+
+#
+# Fire up DB connection
+my $host_db = WakeUpManager::DB::HostDB->new (dbi_param => $dbi_param);
+if (! $host_db) {
+	die "Failed to fire up HostDB.\n";
+}
+
+
+# Do it!
+if ($opt_action eq 'add') {
+	if ($opt_account_type ne 'HOST') {
+		# Setup rights for all specifed hostgroups with the given rights
+		foreach my $item (@{$account_types->{$opt_account_type}}) {
+			if (! $host_db->give_user_rights_on_hostgroups ($opt_user, [ $item->{hg_id} ], $item->{rights})) {
+				warn "Error: Failed to set rights on hostgroup #$item->{hg_id}.\n";
+			}
+		}
+
+	} else {
+		# Get host_id for given host name
+		my $host_id = $host_db->get_host_id ($opt_host);
+
+		if (! defined $host_id) {
+			die "Error: Host \"$opt_host\" not found in WakeUpManager database.\n";
+		}
+
+		# Setup rights for the host with the preset HOST rights
+		if (! $host_db->give_user_rights_on_host ($opt_user, $host_id, $account_types->{$opt_account_type})) {
+			die "Error: Failed to set rights on host \"$opt_host\".\n";
+		}
+	}
+}
+
+elsif ($opt_action eq 'remove') {
+	die "Action 'remove' not implemented yet.\n";
+#	# If a type is specified, remove only from configured groups
+#	if (defined $account_types->{$opt_account_type}) {
+#		$host_db->disallow_user_to_boot_hostgroups ($opt_user, $account_types->{$opt_account_type});
+#	# If NOT, remove user from all groups
+#	} else {
+#		$host_db->disallow_user_to_boot_hostgroups ($opt_user, undef);
+#	}
+}
