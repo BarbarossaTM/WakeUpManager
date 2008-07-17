@@ -16,8 +16,8 @@ use HTML::Template;
 
 #
 # Default values
-my $default_title = "Wake Up Manager";
-my $default_h1 = "Wake Up Manager";
+my $default_title = "WakeUpManager";
+my $default_h1 = "WakeUpManager";
 
 my $TEMPLATE_BASEDIR = "/srv/wum/htdata/templates/";
 
@@ -113,6 +113,11 @@ sub get_page () {
 				if ($page_header_elements->{$header_elem}) {
 					$self->{template}->{default}->param ($header_elem => $page_header_elements->{$header_elem});
 				}
+			}
+
+			# Pimp page title
+			if ($page_header_elements->{h2}) {
+				$self->{template}->{default}->param (title => "$default_title - $page_header_elements->{h2}");
 			}
 
 			# File page template if there
