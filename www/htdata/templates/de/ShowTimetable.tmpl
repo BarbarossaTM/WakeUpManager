@@ -18,27 +18,7 @@
 	  <div class="box">
 	   <div class="box_head">&raquo; Zeitplan anzeigen</div>
 	   <div class="box_content">
-
-	    <div id='host_select'>
-	     <select name="host_id">
-	      <TMPL_LOOP NAME="host_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
-	      </TMPL_LOOP>
-	     </select>
-	    </div>
-
-	    <!-- Nur Rechner der Gruppe <Hostgroup> anzeigen. //-->
-	    <TMPL_IF hostgroup_loop>
-	     <p class='hostgroup_list'>
-	      Nur Rechner der Gruppe
-
-	      <select name="group" onChange="updateHostlist();">
-	       <TMPL_LOOP NAME="hostgroup_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
-	       </TMPL_LOOP>
-	      </select>
-
-	      anzeigen.
-	     </p>
-	    </TMPL_IF>
+	    <TMPL_INCLUDE NAME="host_select.tmpl">
 
 	    <input type="button" value='Zeitplan anzeigen' onClick="showConfig();">
 	   </div>

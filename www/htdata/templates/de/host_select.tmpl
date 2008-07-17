@@ -1,0 +1,24 @@
+	    <TMPL_IF hostgroup_loop>
+	     <div class='hostgroup_list'>
+	      Nur Rechner der Gruppe
+
+	      <select name="group" onChange="updateHostlist();">
+	       <TMPL_LOOP NAME="hostgroup_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	       </TMPL_LOOP>
+	      </select>
+
+	      anzeigen.
+
+	      <br>
+	      <br>
+	     </div>
+	    </TMPL_IF>
+
+	    <div id='host_select'>
+	     <select name="host_id">
+	      <TMPL_LOOP NAME="host_loop"><option value="<TMPL_VAR NAME=key>"><TMPL_VAR NAME=val></option>
+	      </TMPL_LOOP>
+	     </select>
+
+	     <br>
+	    </div>
