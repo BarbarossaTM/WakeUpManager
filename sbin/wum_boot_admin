@@ -1,0 +1,58 @@
+#!/usr/bin/perl -WT
+#
+# Boot host unconditionally
+#
+# Maximilian Wilhelm <max@rfc2324.org>
+#  -- Mon, 16 Jun 2008 00:11:43 +0200
+#
+
+use strict;
+
+use WakeUpManager::Agent::Connector;
+use WakeUpManager::WUM::Config;
+
+use Socket;
+
+my @hosts = @ARGV;
+
+if (! @hosts) {
+	print STDERR "Usage: $0 host1 [host2 [...]]\n";
+	exit 1;
+}
+
+my $config = WakeUpManager::WUM::Config->new ();
+my $dbi_param = $config->get_dbi_param ('HostDB');
+
+my $host_db = WakeUpManager::DB::HostDB->new (dbi_param => $dbi_param);
+if (! $host_db) {
+	die "Error: Could not connect to database.\n";
+}
+
+my $connector = WakeUpManager::Agent::Connector->new (host_db_h => $host_db);
+if (! $connector) {
+	die "Error: Could not fire up Agent::Connector.\n";
+}
+
+foreach my $host (@hosts) {
+	if (! ($host =~ m/\./)) {
+		my ($name, $aliases, $addrtype, $length, @addrs) = gethostbyname ($host);
+		if (! $name) {
+			print STDERR "Can't autocomplete hostname \"$host\". SKipping\n";
+			next;
+		}
+
+		$host = $name;
+	}
+
+	my $host_id = $host_db->get_host_id ($host);
+	if (! $host_id) {
+		print STDERR "Error: Invalid host \"$host\".\n";
+		next;
+	}
+
+	if ($connector->boot_host ($host_id)) {
+		print "Booting host \"$host\".\n";
+	} else {
+		print "Booting host \"$host\ FAILED!\n";
+	}
+}
