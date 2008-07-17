@@ -74,22 +74,6 @@ CREATE TABLE host (
 CREATE INDEX host_csid_key on host using BTREE (csid);
 
 
-CREATE VIEW v_host
-	AS
-		SELECT
-			h.name as "hostname",
-			cs.name as "config set",
-			n.name as "network",
-			h.mac_addr as "mac addr",
-			n.description as "network desc"
-		FROM
-			host		h,
-			config_set	cs,
-			network		n
-		WHERE
-				h.csid = cs.csid
-			AND	h.net_id = n.net_id;
-
 --
 -- The times and actions, a config_set consists of
 CREATE TABLE times (
@@ -164,6 +148,27 @@ CREATE VIEW v_hostgroup_host
 		WHERE
 				h.host_id = hg_h.host_id
 			AND	hg_h.hostgroup_id = hg.hostgroup_id;
+CREATE VIEW v_host
+	AS
+		SELECT
+			h.name as "hostname",
+			hg.name as "hostgroup",
+			cs.name as "config set",
+			n.name as "network",
+			h.mac_addr as "mac addr",
+			n.description as "network desc"
+		FROM
+			host		h,
+			hostgroup_host	hg_h,
+			hostgroup	hg,
+			config_set	cs,
+			network		n
+		WHERE
+				h.csid = cs.csid
+			AND	h.net_id = n.net_id
+			AND	h.host_id = hg_h.host_id
+			AND	hg_h.hostgroup_id = hg.hostgroup_id;
+
 
 --
 -- Table to specify hostgroup hierarchy
