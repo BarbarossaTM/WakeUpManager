@@ -44,7 +44,7 @@ if ($opt_help ||
     ! defined $opt_user) {
 #    ($opt_action eq 'add' && ((! defined $opt_account_type) || ($opt_account_type eq 'HOST' && ! $opt_host)))) {
        print STDERR "Usage: wum_user\n";
-       print STDERR "\t--action {add|remove} | -a \n";
+       print STDERR "\t--action {add|remove} | -a\n";
        print STDERR "\t--user username -u\n";
        print STDERR "\t[--account_type type | -t]\n";
        print STDERR "\t[--host hostname | -H]\n";
@@ -125,8 +125,11 @@ if ($opt_action eq 'add') {
 	if ($opt_account_type ne 'HOST') {
 		# Setup rights for all specifed hostgroups with the given rights
 		foreach my $item (@{$account_types->{$opt_account_type}}) {
-			if (! $host_db->give_user_rights_on_hostgroups ($opt_user, [ $item->{hg_id} ], $item->{rights})) {
-				warn "Error: Failed to set rights on hostgroup #$item->{hg_id}.\n";
+			my $hg_id = $item->{hg_id};
+
+			print "Setting rights on hostgroup #$hg_id...\n";
+			if (! $host_db->give_user_rights_on_hostgroup ($opt_user, $hg_id, $item->{rights})) {
+				warn "Error: Failed to set rights on hostgroup #$hg_id.\n";
 			}
 		}
 
@@ -139,6 +142,7 @@ if ($opt_action eq 'add') {
 		}
 
 		# Setup rights for the host with the preset HOST rights
+		print "Setting rights on host \"$opt_host\"...\n";
 		if (! $host_db->give_user_rights_on_host ($opt_user, $host_id, $account_types->{$opt_account_type})) {
 			die "Error: Failed to set rights on host \"$opt_host\".\n";
 		}
