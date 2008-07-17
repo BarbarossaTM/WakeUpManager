@@ -313,7 +313,7 @@ sub _gen_menu () { # _gen_menu () : HTML_string for menu {{{
 		$menu_HTML_string .= "\t  <br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=Preferences\">Einstellungen</a><br>\n";
 		$menu_HTML_string .= "\t  <br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=About\">&Uuml;ber Wake Up Manager</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=About\">&Uuml;ber WakeUpManager</a><br>\n";
 	} else {
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=BootHost\">Boot host</a><br>\n" if ($user_can_boot_hosts);;
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=ShowTimetable\">Show timetable</a><br>\n" if ($user_can_read_host_config);
@@ -322,7 +322,7 @@ sub _gen_menu () { # _gen_menu () : HTML_string for menu {{{
 		$menu_HTML_string .= "\t  <br>\n";
 		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=Preferences\">Preferences</a><br>\n";
 		$menu_HTML_string .= "\t  <br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=About\">About Wake Up Manager</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=About\">About WakeUpManager</a><br>\n";
 	}
 
 	return $menu_HTML_string . "\t  </div>\n";
