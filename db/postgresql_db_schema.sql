@@ -53,26 +53,10 @@ CREATE VIEW v_agent_network
 -- Configuration sets
 CREATE TABLE config_set (
 	csid serial primary key,
-	name varchar(42) not null unique,
 	preset boolean not null default 'false',
+	name varchar(42) not null unique,
 	administrative boolean default 'false'
 );
-
-
---
--- The hosts managed with WakeUpManager
-CREATE TABLE host (
-	host_id serial primary key,
-	csid integer not null,
-	name varchar(256) not null unique,
-	mac_addr macaddr not null,
-	net_id integer not null,
-	active boolean not null default true,
-	FOREIGN KEY (csid) REFERENCES config_set (csid),
-	FOREIGN KEY (net_id) REFERENCES network (net_id)
-);
-CREATE INDEX host_csid_key on host using BTREE (csid);
-
 
 --
 -- The times and actions, a config_set consists of
@@ -86,6 +70,71 @@ CREATE TABLE times (
 );
 CREATE INDEX times_csid_key on times using BTREE (csid);
 CREATE UNIQUE INDEX csid_day_time_key on times using BTREE (csid, day, time);
+
+
+--
+-- Hostgroups (Pools, working groups, ...)
+CREATE TABLE hostgroup (
+	hostgroup_id serial primary key,
+	name varchar(42) not null,
+	admin_csid integer,
+	description varchar(256),
+	foreign key (admin_csid) REFERENCES config_set (csid)
+);
+
+--
+-- Table to specify hostgroup hierarchy
+CREATE TABLE hostgroup_tree (
+	super_group_id integer not null,
+	member_group_id integer not null check (member_group_id != super_group_id),
+	FOREIGN KEY (super_group_id) REFERENCES hostgroup (hostgroup_id) ON DELETE CASCADE,
+	FOREIGN KEY (member_group_id) REFERENCES hostgroup (hostgroup_id) ON DELETE CASCADE
+);
+CREATE INDEX hostgroup_tree_super_group_id_key on hostgroup_tree using BTREE (super_group_id);
+CREATE UNIQUE INDEX hostgroup_tree_member_group_id_key on hostgroup_tree using BTREE (member_group_id);
+
+
+
+--
+-- The hosts managed with WakeUpManager
+CREATE TABLE host (
+	host_id serial primary key,
+	csid integer not null,
+	name varchar(256) not null unique,
+	mac_addr macaddr not null,
+	net_id integer not null,
+	boot_host boolean not null default true,
+	shutdown_host boolean not null default true,
+	password varchar(42),
+	hostgroup_id integer not null,
+	FOREIGN KEY (csid) REFERENCES config_set (csid),
+	FOREIGN KEY (net_id) REFERENCES network (net_id),
+	FOREIGN KEY (hostgroup_id) REFERENCES hostgroup (hostgroup_id)
+);
+CREATE INDEX host_csid_key on host using BTREE (csid);
+CREATE INDEX host_hostgroup_id_key on host using BTREE (hostgroup_id);
+
+CREATE VIEW v_host
+	AS
+		SELECT
+			h.host_id,
+			h.name as "hostname",
+			hg.name as "hostgroup",
+			cs.name as "config set",
+			n.name as "network",
+			h.mac_addr as "mac addr",
+			h.boot_host,
+			h.shutdown_host
+		FROM
+			host		h,
+			hostgroup	hg,
+			config_set	cs,
+			network		n
+		WHERE
+				h.csid = cs.csid
+			AND	h.net_id = n.net_id
+			AND	h.hostgroup_id = hg.hostgroup_id;
+
 
 CREATE VIEW v_host_times
 	AS
@@ -115,71 +164,6 @@ CREATE VIEW v_config_set_with_times
 		WHERE
 			cs.csid = t.csid;
 
-
-
---
--- Hostgroups (Pools, working groups, ...)
-CREATE TABLE hostgroup (
-	hostgroup_id serial primary key,
-	name varchar(42) not null,
-	admin_csid integer,
-	description varchar(256),
-	foreign key (admin_csid) REFERENCES config_set (csid)
-);
-
-CREATE TABLE hostgroup_host (
-	host_id integer not null,
-	hostgroup_id integer not null,
-	FOREIGN KEY (host_id) REFERENCES host (host_id) ON DELETE CASCADE,
-	FOREIGN KEY (hostgroup_id) REFERENCES hostgroup (hostgroup_id) ON DELETE CASCADE
-);
-CREATE UNIQUE INDEX hostgroup_host_host_id_key on hostgroup_host using BTREE (host_id);
-CREATE INDEX hostgroup_host_hostgroup_id_key on hostgroup_host using BTREE (hostgroup_id);
-
-CREATE VIEW v_hostgroup_host
-	AS
-		SELECT
-			h.name as "hostname",
-			hg.name as "hostgroup"
-		FROM
-			host		h,
-			hostgroup	hg,
-			hostgroup_host	hg_h
-		WHERE
-				h.host_id = hg_h.host_id
-			AND	hg_h.hostgroup_id = hg.hostgroup_id;
-CREATE VIEW v_host
-	AS
-		SELECT
-			h.name as "hostname",
-			hg.name as "hostgroup",
-			cs.name as "config set",
-			n.name as "network",
-			h.mac_addr as "mac addr",
-			n.description as "network desc"
-		FROM
-			host		h,
-			hostgroup_host	hg_h,
-			hostgroup	hg,
-			config_set	cs,
-			network		n
-		WHERE
-				h.csid = cs.csid
-			AND	h.net_id = n.net_id
-			AND	h.host_id = hg_h.host_id
-			AND	hg_h.hostgroup_id = hg.hostgroup_id;
-
-
---
--- Table to specify hostgroup hierarchy
-CREATE TABLE hostgroup_tree (
-	super_group_id integer not null,
-	member_group_id integer not null check (member_group_id != super_group_id),
-	FOREIGN KEY (super_group_id) REFERENCES hostgroup (hostgroup_id) ON DELETE CASCADE,
-	FOREIGN KEY (member_group_id) REFERENCES hostgroup (hostgroup_id) ON DELETE CASCADE
-);
-CREATE INDEX hostgroup_tree_super_group_id_key on hostgroup_tree using BTREE (super_group_id);
-CREATE UNIQUE INDEX hostgroup_tree_member_group_id_key on hostgroup_tree using BTREE (member_group_id);
 
 
 --

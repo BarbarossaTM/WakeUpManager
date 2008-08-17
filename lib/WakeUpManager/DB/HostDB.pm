@@ -276,9 +276,8 @@ sub get_hosts_in_hostgroup ($) { # get_hosts_in_hostgroup (hostgroup_id) : \%hos
 	# Prepare hostgroup tree query
 	my $sth_grp_hosts = $self->{db_h}->prepare ("
 		SELECT	host.host_id, name, boot_host, shutdown_host
-		FROM	hostgroup_host, host
-		WHERE		hostgroup_id = :id
-			AND	hostgroup_host.host_id = host.host_id") or confess ();
+		FROM	host
+		WHERE	hostgroup_id = :id") or confess ();
 	$sth_grp_hosts->bind_param (":id", $hostgroup_id) or confess ();
 	$sth_grp_hosts->execute () or confess ();
 
@@ -525,8 +524,8 @@ sub _user_has_right_on_host ($$$) { # _user_has_right_on_host (uid, host_id, rig
 	# No match, check hostgroups
 	my $sth_grp = $self->{db_h}->prepare ("
 		SELECT	hostgroup_id
-		FROM	hostgroup_host
-		WHERE		host_id = $host_id");
+		FROM	host
+		WHERE	host_id = $host_id");
 	$sth_grp->execute () or confess;
 
 	#
@@ -835,20 +834,20 @@ sub _hosts_of_hostgroup_user_has_right_on ($$) { # _hosts_user_has_right_on (hos
 		WHERE	host_id in (
 
 			SELECT	host_acl.host_id
-			FROM	hostgroup_host, host_acl
-			WHERE		hostgroup_host.hostgroup_id = :hg_id
-				AND	hostgroup_host.host_id = host_acl.host_id
+			FROM	host, host_acl
+			WHERE		host.hostgroup_id = :hg_id
+				AND	host.host_id = host_acl.host_id
 				AND	uid = :uid
 				AND	$right = 't'
 
 			UNION
 
 			SELECT	host_id
-			FROM	hostgroup_host, hostgroup_acl
+			FROM	host, hostgroup_acl
 			WHERE	hostgroup_acl.hostgroup_id = :hg_id
 				AND	uid = :uid
 				AND	$right = 't'
-				AND	hostgroup_acl.hostgroup_id = hostgroup_host.hostgroup_id
+				AND	hostgroup_acl.hostgroup_id = host.hostgroup_id
 			)");
 	$sth_acl->bind_param (":hg_id", $hostgroup_id);
 	$sth_acl->bind_param (":uid", $uid);
