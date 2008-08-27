@@ -57,6 +57,10 @@ CREATE TABLE config_set (
 	name varchar(42) not null unique,
 	administrative boolean default 'false'
 );
+CREATE RULE get_config_set_csid_seq
+	AS
+		ON INSERT TO config_set DO
+			SELECT currval('config_set_csid_seq'::text::regclass) AS csid;
 
 --
 -- The times and actions, a config_set consists of
