@@ -78,13 +78,15 @@ if ($lang eq 'de') {
 my $boot_host_checked = ($host_state->{boot_host}) ? "checked" : "";
 my $shutdown_host_checked =  ($host_state->{shutdown_host}) ? "checked" : "";
 
-print "<form name=\"host_state_form2\" method=\"POST\">
- <input type=\"checkbox\" name=\"boot_host\"     value=\"boot_host\" $boot_host_checked> $boot_host_name <br>
- <input type=\"checkbox\" name=\"shutdown_host\" value=\"shutdown_host\" $shutdown_host_checked> $shutdown_host_name <br>\n";
+print "<form name=\"host_state_form2\" method=\"POST\" action=\"\">
+ <div>
+  <input type=\"checkbox\" name=\"boot_host\"     value=\"boot_host\" $boot_host_checked> $boot_host_name <br>
+  <input type=\"checkbox\" name=\"shutdown_host\" value=\"shutdown_host\" $shutdown_host_checked> $shutdown_host_name <br>
+ </div>\n";
 
 if ($host_db->user_can_write_host_config ($user, $host_id)) {
-print " <br>
- <div id=\"host_state_update_result\"><input type=\"button\" value=\"Status speichern\" onclick=\"setHostState();\"></div>\n";
+print "
+ <div id=\"host_state_update_result\"><br><input type=\"button\" value=\"Status speichern\" onclick=\"setHostState();\"></div>\n";
 }
 
 print "</form>\n";

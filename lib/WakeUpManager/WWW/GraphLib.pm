@@ -338,7 +338,9 @@ sub get_timetable_horizontal_map ($$$) { # get_timetable_horizontal_map (\%times
 			my $x2 = $margin + $left_width + $x->[1];
 			my $y2 = $y + 5;
 
-			$image_map .= " <area $href shape=\"rect\" coords=\"$x1,$y1,$x2,$y2\" title=\"$boot_time[0]:$boot_time[1] - $shutdown_time[0]:$shutdown_time[1]\">\n";
+			my $title = "$boot_time[0]:$boot_time[1] - $shutdown_time[0]:$shutdown_time[1]";
+
+			$image_map .= " <area $href shape=\"rect\" coords=\"$x1,$y1,$x2,$y2\" title=\"$title\" alt=\"$title\">\n";
 		}
 	}
 
@@ -542,7 +544,9 @@ sub get_timetable_vertical_map ($$$) { # print_timetable_vertical_map (\%times_l
 			my $x2 = $x + 5;
 			my $y2 = $margin + $top_vert_height + ($shutdown_time[0] * 60 + $shutdown_time[1]) * $hour_height / 60;
 
-			$image_map .= " <area $href  shape=\"rect\" coords=\"$x1,$y1,$x2,$y2\" title=\"$boot_time[0]:$boot_time[1] - $shutdown_time[0]:$shutdown_time[1]\">\n";
+			my $title = "$boot_time[0]:$boot_time[1] - $shutdown_time[0]:$shutdown_time[1]";
+
+			$image_map .= " <area $href  shape=\"rect\" coords=\"$x1,$y1,$x2,$y2\" title=\"$title\" alt=\"$title\">\n";
 		}
 	}
 
