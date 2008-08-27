@@ -71,10 +71,11 @@ sub gen_pretty_hostgroup_tree_select ($;$) { # gen_pretty_hostgroup_tree_select 
 } # }}}
 
 
-sub gen_pretty_host_select ($) { # gen_pretty_host_select (\%hosts) : \@hostlist {{{
+sub gen_pretty_host_select ($;$) { # gen_pretty_host_select (\%hosts) : \@hostlist {{{
 	my $self = shift;
 
 	my $hosts = shift;
+	my $append_host_state = shift;
 
 	if (ref ($hosts) ne 'HASH') {
 		return undef;
@@ -82,10 +83,15 @@ sub gen_pretty_host_select ($) { # gen_pretty_host_select (\%hosts) : \@hostlist
 
 	my @host_list;
 	foreach my $key (sort {$hosts->{$a}->{name} cmp $hosts->{$b}->{name}} keys %{$hosts}) {
-		my $val = "$hosts->{$key}->{name} (";
-		   $val .= ($hosts->{$key}->{boot_host}) ? "B" : "-";
-		   $val .= ($hosts->{$key}->{shutdown_host}) ? "S" : "-";
-		   $val .= ")";
+		my $val = "$hosts->{$key}->{name}";
+
+		if ($append_host_state) {
+			$val .= " (";
+			$val .= ($hosts->{$key}->{boot_host}) ? "B" : "-";
+			$val .= ($hosts->{$key}->{shutdown_host}) ? "S" : "-";
+			$val .= ")";
+		}
+
 		push @host_list, { key => $key, val => $val };
 	}
 
