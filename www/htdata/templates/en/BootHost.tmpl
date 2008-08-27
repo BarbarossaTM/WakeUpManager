@@ -7,7 +7,6 @@
 	<!-- If the user has the right to boot at least on host //-->
 	<TMPL_IF host_loop>
 	 <form name="boot_host" action="index.pl" method="POST">
-	  <input type="hidden" name="page" value="BootHost">
 
 	  <p>
 	   To boot up a host over the network now choose the desired host from the list
@@ -15,6 +14,7 @@
 	  </p>
 
 	  <div class="box">
+	  <input type="hidden" name="page" value="BootHost">
 	   <div class="box_head">&raquo; Boot host</div>
 	   <div class="box_content">
 	    <TMPL_INCLUDE NAME="host_select.tmpl">

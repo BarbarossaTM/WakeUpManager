@@ -25,14 +25,14 @@
 	<!-- If the user has the right to read the config of least on host //-->
 	<TMPL_IF host_loop>
 	 <form name="show_config_form" action="index.pl" method="GET">
-	  <input type="hidden" name="page" value="UpdateTimetable">
-	  <input type="hidden" name="submitted" value="0">
 
 	  <p>
 	   Choose the host, which timetable should be shown and updated.
 	  </p>
 
 	  <div class="box">
+	   <input type="hidden" name="page" value="UpdateTimetable">
+	   <input type="hidden" name="submitted" value="0">
 	   <div class="box_head">&raquo; Show timetable</div>
 	   <div class="box_content">
 	    <TMPL_INCLUDE NAME="host_select.tmpl">
@@ -52,9 +52,9 @@
 	 <!-- If the user has the right to read the config of least on host //-->
 	 <TMPL_IF timetable>
 	 <form name="update_timetable_form" action="index.pl" method="POST">
-	  <input type="hidden" name="page" value="UpdateTimetable">
 <TMPL_VAR hidden_form_data>
 	 <div class="box">
+	  <input type="hidden" name="page" value="UpdateTimetable">
 	  <div class="box_head">&raquo; Timetable of host <TMPL_VAR hostname></div>
 	  <div class="box_content">
 <TMPL_VAR timetable>
