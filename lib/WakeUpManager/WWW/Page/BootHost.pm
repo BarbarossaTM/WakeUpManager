@@ -10,8 +10,6 @@ use strict;
 use Carp qw(cluck confess);
 
 use WakeUpManager::Agent::Connector;
-use WakeUpManager::Config;
-use WakeUpManager::DB::HostDB;
 use WakeUpManager::WWW::Utils;
 
 my $messages = { # {{{
@@ -76,15 +74,8 @@ sub new () { # new () :  {{{
 		confess __PACKAGE__ . "->new(): No or invalid 'params' argument.";
 	}
 
-	# Read wum.conf
-	my $wum_config = WakeUpManager::Config-> new (config_file => "/etc/wum/wum.conf");
-	if (! $wum_config) {
-		cluck __PACKAGE__ . "->new(): Could not get 'wum_config'...";
-		return undef;
-	}
-
-	# Setup DB handle but don't check it here!
-	my $host_db_h = WakeUpManager::DB::HostDB-> new (dbi_param => $wum_config->get_dbi_param ('HostDB'));
+	# Pull DB handle but don't check it here!
+	my $host_db_h = $args->{host_db_h};
 
 	my $obj = bless {
 		debug => $debug,
@@ -93,8 +84,6 @@ sub new () { # new () :  {{{
 		host_db_h => $host_db_h,
 
 		params => $params,
-
-		wum_config => $wum_config,
 	}, $class;
 
 	return $obj;

@@ -105,7 +105,10 @@ sub get_page () {
 	# Get content part and optinal headers from page logic module
 	my $page_name = $self->{params}->get_page_name ();
 	if ($self->_is_valid_page ($page_name) > 0) {
-		my $page_logic = "WakeUpManager::WWW::Page::$page_name"->new (params => $self->{params});
+		my $page_logic = "WakeUpManager::WWW::Page::$page_name"->new (
+			params => $self->{params},
+			host_db_h => $self->{host_db_h},
+		);
 		if ($page_logic) {
 			# Maybe there are optional header elements
 			my $page_header_elements =  $page_logic->get_header_elements ();
