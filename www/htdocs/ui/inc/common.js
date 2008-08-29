@@ -25,25 +25,24 @@
 	}
 
 
-	function request_data_into_document_element (document_element, url, errormsg) {
+	function request_data_into_document_element (document_element, url, error_element, errormsg) {
 		var req = request_init ();
 		if (req == null)
 			return;
 
-		var elem = document.getElementById (document_element);
+		var value_elem = document.getElementById (document_element);
+		var error_elem = document.getElementById (error_element);
 
 		req.open("GET", url, true)
-
-
 
 		// Run this function at reqeust end
 		 req.onreadystatechange = function() {
 			switch(req.readyState) {
 				case 4:
 					if (req.status == 200) {
-						elem.innerHTML = req.responseText;
+						value_elem.innerHTML = req.responseText;
 					} else {
-						elem.innerHTML = errormsg;
+						error_elem.innerHTML = errormsg;
 					}
 					break;
 

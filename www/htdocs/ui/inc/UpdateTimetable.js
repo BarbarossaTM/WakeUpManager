@@ -7,5 +7,5 @@
 		document.getElementById('host_select').innerHTML = '<img src="/img/loading.gif" alt="Loading data...">';
 
 		// host_select neu fuellen
-		request_data_into_document_element ('host_select', url, errormsg);
+		request_data_into_document_element ('host_select', url, 'host_select', errormsg);
 	}

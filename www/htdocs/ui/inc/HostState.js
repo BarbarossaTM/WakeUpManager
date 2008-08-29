@@ -10,23 +10,22 @@
 		document.getElementById('result').innerHTML = '';
 
 		// host_select neu fuellen
-		request_data_into_document_element ('host_select', url, errormsg);
+		request_data_into_document_element ('host_select', url, 'host_select', errormsg);
 	}
 
 	function loadHostState(){
 		var url = '/ui/ajax/get_host_state?host_id=' + document.getElementsByName('host_id')[0].value;
 
-		var errormsg = "<span class='error'>Rechnerkonfiguration konnte nicht geladen werden!</span>";
+		var errormsg = "<span class='error'>Could not load host state!</span>";
 
 		var option_index = document.forms.host_state.elements.host_id.selectedIndex;
-		var hostname = document.forms.host_state.host_id.options[option_index].text;
 
 		// Ergebnisbox mit <div id='result_box'> malen und mit Ladebildchen bestuecken
-		document.getElementById('result').innerHTML = "<div class='box'><div class='box_head'>&raquo; Aktivierungsstatus f&uuml;r Rechner " + hostname + "</div><div class='box_content' id='result_box'>" +
-								"<img src='/img/loading-bar.gif' alt='Booting host...'>" + "</div></div>";
+		document.getElementById('result').innerHTML = "<div class='box'><div class='box_head'>&nbsp;<br></div><div class='box_content' id='result_box'>" +
+								"<img src='/img/loading-bar.gif' alt='Loading host state...'>" + "</div></div>";
 
 		// 'result_box_ mit echten Daten fuellen
-		request_data_into_document_element ('result_box', url, errormsg);
+		request_data_into_document_element ('result', url, 'result_box', errormsg);
 	}
 
 	function setHostState(){
@@ -35,12 +34,12 @@
 
 		var url = '/ui/ajax/set_host_state?host_id=' + document.getElementsByName('host_id')[0].value + '&boot_host=' + boot_host + '&shutdown_host=' + shutdown_host;
 
-		var errormsg = "<span class='error'>Rechnerkonfiguration konnte nicht gespeichert werden!</span>";
+		var errormsg = "<span class='error'>Could not save host state!</span>";
 
 		// Ergebnisbox mit <div id='result_box'> malen und mit Ladebildchen bestuecken
 		document.getElementById('host_state_update_result').innerHTML = "<img src='/img/loading.gif' alt='Updating host state...'>";
 
 		// 'result_box_ mit echten Daten fuellen
-		request_data_into_document_element ('host_state_update_result', url, errormsg);
+		request_data_into_document_element ('host_state_update_result', url, 'host_state_update_result', errormsg);
 	}
 

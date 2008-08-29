@@ -13,6 +13,6 @@
 
 		document.cookie = "timetable_orientation=" + timetable_orientation + ";";
 
-		document.getElementById('result_box').innerHTML = "Einstellungen gespeichert";
+		document.getElementById('result_box').innerHTML = "Ok";
 
 	}
