@@ -7,88 +7,18 @@
 use strict;
 use CGI;
 
-use WakeUpManager::Agent::Connector;
-use WakeUpManager::Config;
-use WakeUpManager::DB::HostDB;
 use WakeUpManager::WWW;
 
 #
 # WWW lib
-my $www = WakeUpManager::WWW->new (contentless_mode => 1);
+my $www = WakeUpManager::WWW->new (
+	contentless_mode => 1,
+	ajax_mode => 1,
+	ajax_page_name => 'BootHost',
+	ajax_func_name => 'boot_host');
 if (! $www) {
 	print "Content-Type: text/plain\n\nAn internal error occured. Please contact your system administrator\n";
 	exit 0;
 }
 
-my $params = $www->{params};
-
-# Get user name from apache authorization and strip any trailing REALM
-my $user = $params->get_user ();
-my $lang = $params->get_lang ();
-
-#
-# DB connection
-my $wum_config = WakeUpManager::Config->new (config_file => "/etc/wum/wum.conf");
-my $host_db = WakeUpManager::DB::HostDB->new (dbi_param => $wum_config->get_dbi_param ("HostDB"));
-if (! $host_db) {
-	print "<span class=\"error\">Error: No database connection.</span>\n";
-        exit 1;
-}
-
-
-#
-# Check host_id
-my $host_id = $params->get_http_param ('host_id');
-if (! $host_id) {
-	print "<span class=\"error\">No host_id given.</span>\n";
-	print STDERR "No host_id given.";
-	exit 1;
-} elsif (! $host_db->is_valid_host ($host_id)) {
-	print "<span class=\"error\">Invalid host_id \"$host_id\".</span>\n";
-	print STDERR "Invalid host_id \"$host_id\".";
-	exit 1;
-}
-
-
-
-#
-# Agent connection
-my $agent_conn = WakeUpManager::Agent::Connector->new (host_db_h => $host_db);
-if (! $agent_conn) {
-	print "<span class=\"error\">Internal error.</span>\n";
-	print STDERR "No Agent::Connector handle";
-	exit 1;
-}
-
-# This _should_ work as we checked the host_id
-my $host_name = $host_db->get_host_name ($host_id) || "#$host_id";
-
-
-#
-# So try to boot the host
-if ($host_db->user_can_boot_host ($user, $host_id)) {
-	if ($agent_conn->boot_host ($host_id)) {
-		if ($lang eq 'de') {
-			print "Host <i>$host_name</i> wird gestartet.\n";
-		} else {
-			print "Booting host <i>$host_name</i>.\n";
-		}
-	} else {
-		my $error_msg = $agent_conn->get_errormsg ();
-
-		if ($error_msg) {
-			print "<span class=\"error\">$error_msg</span>\n";
-			print STDERR "Error: Agent::Connector said: \"$error_msg\"\n";
-		} else {
-			print "<span class=\"error\">An error occured while booting host \"$host_name\" (ID: $host_id)</span>\n";
-			print STDERR "boot_host failed, but no error_msg from Agent::Connector";
-		}
-	}
-} else {
-	if ($lang eq 'de') {
-		print "<span class=\"error\">Host <i>$host_name</i> (ID: $host_id) kann nicht gestartet werden. Aktion nicht gestattet f&uuml;r Nutzer $user.</span>\n";
-	} else {
-		 print "<span class=\"error\"Booting <i>$host_name</i> not allowed for user $user.</span>\n";
-	}
-	print STDERR "Error: User \"$user\" has no right to boot host \"$host_name\" (ID: $host_id)";
-}
+print $www->get_page ();

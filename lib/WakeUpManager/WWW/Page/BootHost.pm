@@ -86,6 +86,12 @@ sub new () { # new () :  {{{
 		params => $params,
 	}, $class;
 
+	#
+	# Get CGI parameters
+	$obj->{user} = $params->get_auth_info()->{user};
+	$obj->{host_id} = $params->get_http_param ('host_id');
+	$obj->{lang} = $params->get_lang ();
+
 	return $obj;
 } #}}}
 
@@ -124,10 +130,9 @@ sub get_content_elements () {
 	my $content_elements = {};
 
 	#
-	# Get CGI parameters
-	my $user = $self->{params}->get_auth_info()->{user};
-	my $host_id = $self->{params}->get_http_param ('host_id');
-	my $lang = $self->{params}->get_lang ();
+	# Get CGI parammeters
+	my $user = $self->{user};
+	my $host_id = $self->{host_id};
 
 	my $bootable_hostgroups = $self->{host_db_h}->hostgroups_user_can_boot ($user);
 	my $bootable_hosts = $self->{host_db_h}->hosts_user_can_boot ($user);
@@ -147,40 +152,67 @@ sub get_content_elements () {
 	# If the user submitted the form, let's go
 	#
 	if (defined $host_id) {
-		if (! $self->{host_db_h}->is_valid_host ($host_id)) {
-			$content_elements->{result} = p_error ($messages->{invalid_host_id}->{$lang});
-			return $content_elements;
-		}
-
-		my $host_name = $self->{host_db_h}->get_host_name ($host_id) || "#$host_id";
-
-		if (! $self->{host_db_h}->user_can_boot_host ($user, $host_id)) {
-			$content_elements->{result} = p_error (sprintf ($messages->{user_not_allowed}->{$lang}, $host_name));
-			return $content_elements;
-		}
-
-		my $agent_conn = WakeUpManager::Agent::Connector->new (host_db_h => $self->{host_db_h});
-		if (! $agent_conn) {
-			$content_elements->{result} = p_error ($messages->{no_agent}->{$lang});;
-		}
-
-		if ($agent_conn->boot_host ($host_id)) {
-			$content_elements->{result} = sprintf ($messages->{booting_host}->{$lang}, $host_name);
-			return $content_elements;
-		} else {
-			my $error_msg = $agent_conn->get_errormsg ();
-
-			if ($error_msg) {
-				$content_elements->{result} = p_error (sprintf ($messages->{error_on_agent}->{$lang}, $error_msg));
-				return $content_elements;
-			} else {
-				$content_elements->{result} = p_error ($messages->{unknown_error}->{$lang});
-				return $content_elements;
-			}
-		}
+		$content_elements->{result} = $self->_boot_host ();
 	}
 
 	return $content_elements;
+}
+
+
+sub ajax_call ($) {
+	my $self = shift;
+
+	my $ajax_func_name = shift;
+
+	return undef if (ref ($self) ne __PACKAGE__);
+	return undef if (! defined $ajax_func_name);
+
+	if ($ajax_func_name eq 'boot_host') {
+		return $self->_boot_host ();
+	} else {
+		return undef;
+	}
+}
+
+
+################################################################################
+#				internal routintes			       #
+################################################################################
+
+
+sub _boot_host () {
+	my $self = shift;
+
+	my $host_id = $self->{host_id};
+	my $user = $self->{user};
+	my $lang = $self->{lang};
+
+	if (! $self->{host_db_h}->is_valid_host ($host_id)) {
+		return  p_error ($messages->{invalid_host_id}->{$lang});
+	}
+
+	my $host_name = $self->{host_db_h}->get_host_name ($host_id) || "#$host_id";
+
+	if (! $self->{host_db_h}->user_can_boot_host ($user, $host_id)) {
+		return p_error (sprintf ($messages->{user_not_allowed}->{$lang}, $host_name));
+	}
+
+	my $agent_conn = WakeUpManager::Agent::Connector->new (host_db_h => $self->{host_db_h});
+	if (! $agent_conn) {
+		return p_error ($messages->{no_agent}->{$lang});
+	}
+
+	if ($agent_conn->boot_host ($host_id)) {
+		return sprintf ($messages->{booting_host}->{$lang}, $host_name);
+	} else {
+		my $error_msg = $agent_conn->get_errormsg ();
+
+		if ($error_msg) {
+			return p_error (sprintf ($messages->{error_on_agent}->{$lang}, $error_msg));
+		} else {
+			return p_error ($messages->{unknown_error}->{$lang});
+		}
+	}
 }
 
 1;
