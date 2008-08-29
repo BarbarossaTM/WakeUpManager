@@ -63,15 +63,6 @@
 	 </div>
 	 </form>
 
-	  <div id='result'>
-	   <TMPL_IF result>
-	    <div class="box">
-	     <div class="box_head">&raquo; Result</div>
-	      <div class="box_content">
-	       <TMPL_VAR result>
-	      </div>
-	     </div>
-	   </TMPL_IF> <!-- result //-->
-	  </div>
+	  <TMPL_INCLUDE NAME="result_box_complete.tmpl">
 	 </TMPL_IF> <!-- timetable //-->
 	</TMPL_IF> <!-- !error //-->
