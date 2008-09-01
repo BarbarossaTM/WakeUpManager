@@ -44,11 +44,55 @@
 	        Sie haben nicht das Recht den Zeitplan des Rechners <TMPL_VAR user_not_allow_to_view_timetable> einzusehen.
 	      </TMPL_IF>
 
-
 	      <!-- HostState //-->
+	      <TMPL_IF user_not_allow_to_view_state>
+	        Sie haben nicht das Recht den Aktivierungsstatus des Rechners <TMPL_VAR user_not_allow_to_view_state> einzusehen..
+	      </TMPL_IF>
+
+	      <TMPL_IF user_not_allow_to_update_state>
+	        Sie haben nicht das Recht den Aktivierungsstatus des Rechners <TMPL_VAR user_not_allow_to_update_state> zu &auml;ndern.
+	      </TMPL_IF>
+
+	      <TMPL_IF missing_arg>
+	       Es wurde kein Wert f&uuml;r <TMPL_VAR missing_arg> angegeben.
+	      </TMPL_IF>
+
+	      <TMPL_IF host_state_error>
+	       Fehler beim speichern des Aktivierungsstatus.
+	      </TMPL_IF>
+
 
 	      </p>
+	     </TMPL_IF> <!-- error //-->
+
+
+	     <!--
+		usual content part
+	     //-->
+
+	     <!-- HostState //-->
+	     <TMPL_IF host_state>
+	      <form name="host_state_update" method="POST" action="index.pl">
+	       <div>
+	        <input type="hidden" name="page" value="HostState">
+	        <input type="hidden" name="update" value="1">
+	        <input type="hidden" name="host_id" value="<TMPL_VAR host_id>">
+	        <input type="checkbox" name="boot_host" value="boot_host" <TMPL_IF host_state_boot>checked</TMPL_IF>> WakeUpManager erlauben, den Rechner zu starten <br>
+	        <input type="checkbox" name="shutdown_host" value="shutdown_host" <TMPL_IF host_state_shutdown>checked</TMPL_IF>> WakeUpManager erlauben, den Rechner herunterzufahren
+	       </div>
+
+	       <TMPL_IF host_state_writeable>
+	        <div id="host_state_update_result">
+		 <br><input type="submit" value="Aktivierungsstatus gespeichert" onmousedown="document.host_state_update.action = 'javascript:setHostState();'">
+	        </div>
+	       </TMPL_IF>
+	      </form>
 	     </TMPL_IF>
+
+	     <TMPL_IF host_state_updated>
+	      Status wurde gespeichert.
+	     </TMPL_IF>
+
 
 	     <TMPL_IF content>
 	      <TMPL_VAR content>
@@ -56,3 +100,7 @@
 	    </div>
 	   </div>
 	  </TMPL_IF>
+
+
+
+

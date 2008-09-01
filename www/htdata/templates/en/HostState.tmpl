@@ -5,7 +5,7 @@
 
 	<!-- If the user has the right to boot at least on host //-->
 	<TMPL_IF host_loop>
-	 <form name="host_state" action="" method="POST">
+	 <form name="host_state" action="index.pl" method="POST">
 
 	  <p>
 	   To view or update the activation state of a host choose the desired host from the list
@@ -18,11 +18,12 @@
 	  </p>
 
 	  <div class="box">
+	   <input type="hidden" name="page" value="HostState">
 	   <div class="box_head">&raquo; Show host activation state</div>
 	   <div class="box_content">
 	    <TMPL_INCLUDE NAME="host_select.tmpl">
 
-	    <input type="button" value='Show state' onClick="loadHostState();">
+	    <input type="submit" value='Show state' onmousedown="document.host_state.action = 'javascript:loadHostState();'">
 	   </div>
 	  </div>
 	  <!-- box end //-->

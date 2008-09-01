@@ -103,9 +103,168 @@ sub get_content_elements () {
 
 	$content_elements->{host_loop} = WakeUpManager::WWW::Utils->gen_pretty_host_select ($allowed_hosts);
 
+	my $host_id = $self->{params}->get_http_param ('host_id');
+	my $update =  $self->{params}->get_http_param ('update');
+	if ($host_id) {
+		my $result;
+
+		if (! defined $update) {
+			$result = $self->_get_host_state ();
+		} else {
+			$result = $self->_set_host_state ();
+		}
+
+		foreach my $key (keys %{$result}) {
+			$content_elements->{$key} = $result->{$key};
+		}
+
+		$content_elements->{result} = 1;
+	}
+
 	return $content_elements;
 }
 
+
+sub ajax_call ($) {
+	my $self = shift;
+
+	my $func_name = shift;
+
+	return undef if (ref ($self) ne __PACKAGE__);
+	return undef if (! defined $func_name);
+
+	if ($func_name eq 'get_host_state') {
+		return $self->_get_host_state ();
+	} elsif ($func_name eq 'set_host_state') {
+		return $self->_set_host_state ();
+	} else {
+		return undef;
+	}
+}
+
+
+sub _get_host_state () {
+	my $self = shift;
+
+	return undef if (ref ($self) ne __PACKAGE__);
+
+	my $host_db_h = $self->{host_db_h};
+	if (! $host_db_h) {
+		return {
+			error => 1,
+			no_db_conn => 1,
+		};
+	}
+
+	# Get options
+	my $host_id = $self->{params}->get_http_param ('host_id');
+	my $user = $self->{params}->get_user ();
+	my $lang = $self->{params}->get_lang ();
+
+	#
+	# Validate input
+	if (! $host_db_h->is_valid_host ($host_id)) {
+		return {
+			error => 1,
+			invalid_host_id => 1,
+		};
+	}
+
+	my $host_name = $host_db_h->get_host_name ($host_id);
+	if (! $host_name) {
+		$host_name = "#$host_id";
+	}
+
+	#
+	# Check if user is allow to show host config
+	if (! $host_db_h->user_can_read_host_config ($user, $host_id)) {
+		return {
+			error => 1,
+			user_not_allow_to_view_state => $host_name,
+		};
+	}
+
+	#
+	# Query DB for boot times
+	my $host_state = $host_db_h->get_host_state ($host_id);
+	if (ref ($host_state) ne 'HASH') {
+		return {
+			error => 1,
+			unknown_error => 1,
+		};
+	}
+
+	return {
+		box_head_name => 1,
+		host_state => $host_name,
+		host_id => $host_id,
+		host_state_boot => $host_state->{boot_host},
+		host_state_shutdown => $host_state->{shutdown_host},
+		host_state_writeable => $host_db_h->user_can_write_host_config ($user, $host_id),
+	};
+}
+
+
+sub _set_host_state () {
+	my $self = shift;
+
+	return undef if (ref ($self) ne __PACKAGE__);
+
+	# Get host_id
+	my $host_id = $self->{params}->get_http_param ('host_id');
+
+	# Get host_state
+	my $args = {};
+	foreach my $arg (qw(boot_host shutdown_host)) {
+		my $arg_val = $self->{params}->get_http_param ($arg);
+		$args->{$arg} = (defined $arg_val) ? 1 : 0;
+	}
+
+	my $user = $self->{params}->get_auth_info ()->{user};
+	my $lang = $self->{params}->get_lang ();
+
+	# Check DB connection
+	my $host_db_h = $self->{host_db_h};
+	if (! $host_db_h) {
+		return {
+			error => 1,
+			no_db_conn => 1,
+		};
+	}
+
+	# Validate input
+	if (! $host_db_h->is_valid_host ($host_id)) {
+		return {
+			error => 1,
+			invalid_host_id => 1,
+		};
+	}
+
+	my $host_name = $host_db_h->get_host_name ($host_id);
+	if (! $host_name) {
+		$host_name = "#$host_id";
+	}
+
+	#
+	# Check if user is allow to show host config
+	if (! $host_db_h->user_can_write_host_config ($user, $host_id)) {
+		return {
+			error => 1,
+			user_not_allow_to_update_state => $host_name,
+		};
+	}
+
+	if (! $host_db_h->set_host_state ($host_id, $args->{boot_host}, $args->{shutdown_host})) {
+		return {
+			error => 1,
+			host_state_error => 1,
+		};
+	}
+
+	return {
+		host_state_updated => 1,
+	};
+}
 
 1;
 

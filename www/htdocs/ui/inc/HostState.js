@@ -29,17 +29,22 @@
 	}
 
 	function setHostState(){
-		var boot_host = document.forms.host_state_form2.elements.boot_host.checked;
-		var shutdown_host = document.forms.host_state_form2.elements.shutdown_host.checked;
+		var boot_host = document.forms.host_state_update.elements.boot_host.value;
+		var shutdown_host = document.forms.host_state_update.elements.shutdown_host.value;
 
-		var url = '/ui/ajax/set_host_state?host_id=' + document.getElementsByName('host_id')[0].value + '&boot_host=' + boot_host + '&shutdown_host=' + shutdown_host;
+		var url = '/ui/ajax/set_host_state?host_id=' + document.getElementsByName('host_id')[0].value;
+
+		if (boot_host)
+			url = url + '&boot_host=' + boot_host;
+		if (shutdown_host)
+			url = url + '&shutdown_host=' + shutdown_host;
 
 		var errormsg = "<span class='error'>Could not save host state!</span>";
 
 		// Ergebnisbox mit <div id='result_box'> malen und mit Ladebildchen bestuecken
-		document.getElementById('host_state_update_result').innerHTML = "<img src='/img/loading.gif' alt='Updating host state...'>";
+		document.getElementById('result').innerHTML = "<img src='/img/loading.gif' alt='Updating host state...'>";
 
 		// 'result_box_ mit echten Daten fuellen
-		request_data_into_document_element ('host_state_update_result', url, 'host_state_update_result', errormsg);
+		request_data_into_document_element ('result', url, 'result', errormsg);
 	}
 

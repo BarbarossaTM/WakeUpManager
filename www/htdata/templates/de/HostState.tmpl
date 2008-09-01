@@ -4,7 +4,7 @@
 
 	<!-- If the user has the right to boot at least on host //-->
 	<TMPL_IF host_loop>
-	 <form name="host_state" action="" method="POST">
+	 <form name="host_state" action="index.pl" method="POST">
 	  <p>
 	   Um jetzt die Zeitsteuerung f&uuml;r einen Rechner zu (de)aktivieren, w&auml;hlen Sie
 	   den gew&uuml;nschten PC aus der Liste aus und klicken Sie auf &quot;Status laden&quot;.
@@ -16,11 +16,12 @@
 	  </p>
 
 	  <div class="box">
+	   <input type="hidden" name="page" value="HostState">
 	   <div class="box_head">&raquo; Rechnerstatus anzeigen</div>
 	   <div class="box_content">
 	    <TMPL_INCLUDE NAME="host_select.tmpl">
 
-	    <input type="button" value='Status laden' onClick="loadHostState();">
+	    <input type="submit" value='Status laden' onmousedown="document.host_state.action = 'javascript:loadHostState();'">
 	   </div>
 	  </div>
 	  <!-- box end //-->
