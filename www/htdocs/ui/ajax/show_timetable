@@ -1,0 +1,23 @@
+#!/usr/bin/perl -WT
+#
+# Maximilian Wilhelm <max@rfc2324.org>
+#  --  Fri May 30 05:05:32 2008
+#
+
+use strict;
+use CGI;
+
+use WakeUpManager::WWW;
+
+#
+# WWW lib
+my $www = WakeUpManager::WWW->new (
+	ajax_mode => 1,
+	ajax_page_name => 'ShowTimetable',
+	ajax_func_name => 'show_timetable');
+if (! $www) {
+	print "Content-Type: text/plain\n\nAn internal error occured. Please contact your system administrator\n";
+	exit 0;
+}
+
+print $www->get_page ();
