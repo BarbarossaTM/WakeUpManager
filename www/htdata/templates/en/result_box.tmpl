@@ -1,8 +1,58 @@
 	  <TMPL_IF result>
 	   <div class="box">
-	    <div class="box_head">&raquo; Result</div>
+	    <div class="box_head">&raquo;
+	     <TMPL_IF box_head_name>
+	      <TMPL_IF timetable>Timetable of host <TMPL_VAR timetable></TMPL_IF>
+	      <TMPL_IF host_state>Activation state for host <TMPL_VAR host_state></TMPL_IF>
+	     <TMPL_ELSE>
+	      Result
+	     </TMPL_IF>
+	    </div>
 	    <div class="box_content">
-	     <TMPL_VAR result>
+	     <TMPL_IF error>
+	      <p class="error">
+
+	      <TMPL_IF invalid_host_id>
+	       Parameter 'host_id' missing or invalid.
+	      </TMPL_IF>
+
+	      <TMPL_IF unknown_error>
+	       An internal error occured.
+	      </TMPL_IF>
+
+	      <TMPL_IF no_db_conn>
+	       Internal error: Could not connect to database.
+	      </TMPL_IF>
+
+
+	      <!-- BootHost //-->
+	      <TMPL_IF user_not_allow_to_boot_host>
+	       You are not allowed to boot host <TMPL_VAR user_not_allow_to_boot_host>.
+	      </TMPL_IF>
+
+	      <TMPL_IF no_agent>
+	       Internal error: Could not connect to agent.
+	      </TMPL_IF>
+
+	      <TMPL_IF error_on_agent>
+	       Internal error: Agent::Connector said: <TMPL_VAR error_on_agent>.
+	      </TMPL_IF>
+
+
+	      <!-- ShowTimetable //-->
+	      <TMPL_IF user_not_allow_to_view_timetable>
+	        You are not allowed to view the timetable of host <TMPL_VAR user_not_allow_to_view_timetable>.
+	      </TMPL_IF>
+
+
+	      <!-- HostState //-->
+
+	      </p>
+	     </TMPL_IF>
+
+	     <TMPL_IF content>
+	      <TMPL_VAR content>
+	     </TMPL_IF>
 	    </div>
 	   </div>
 	  </TMPL_IF>

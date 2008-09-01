@@ -4,7 +4,7 @@
 
 	<!-- If the user has the right to read the config of least on host //-->
 	<TMPL_IF host_loop>
-	 <form name="show_config_form" action="" method="POST">
+	 <form name="show_timetable" action="" method="POST">
 
 	  <p>
 	   To view the timetable of a host, choose the desired host from the list and click
@@ -12,11 +12,12 @@
 	  </p>
 
 	  <div class="box">
+	   <input type="hidden" name="page" value="ShowTimetable">
 	   <div class="box_head">&raquo; Show timetable</div>
 	   <div class="box_content">
 	    <TMPL_INCLUDE NAME="host_select.tmpl">
 
-	    <input type="button" value='Show timetable' onClick="showConfig();">
+	    <input type="submit" value='Show timetable' onmousedown="document.show_timetable.action = 'javascript:showTimetable();'">
 	   </div>
 	  </div>
 	  <!-- box end //-->

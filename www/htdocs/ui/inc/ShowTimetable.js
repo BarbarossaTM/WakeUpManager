@@ -19,7 +19,7 @@
 
 		var errormsg = "<span class='error'>Rechnerkonfiguration konnte nicht geladen werden!</span>";
 
-		var option_index = document.forms.show_config_form.elements.host_id.selectedIndex;
+		var option_index = document.forms.show_timetable.elements.host_id.selectedIndex;
 
 		// Ergebnisbox mit <div id='result_box'> malen und mit Ladebildchen bestuecken
 		document.getElementById('result').innerHTML = "<div class='box'><div class='box_head'>&nbsp;<br></div><div class='box_content' id='result_box'>" +

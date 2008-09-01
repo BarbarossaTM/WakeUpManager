@@ -128,9 +128,12 @@ sub get_content_elements () {
 	#
 	if (defined $host_id) {
 		my $result_hash = $self->_boot_host ();
+
 		foreach my $key (keys %{$result_hash}) {
 			$content_elements->{$key} = $result_hash->{$key};
 		}
+
+		$content_elements->{result} = 1;
 	}
 
 	return $content_elements;
@@ -194,7 +197,7 @@ sub _boot_host () {
 
 	if ($agent_conn->boot_host ($host_id)) {
 		return {
-			result => sprintf ($messages->{booting_host}->{$lang}, $host_name),
+			content => sprintf ($messages->{booting_host}->{$lang}, $host_name),
 		};
 	} else {
 		my $error_msg = $agent_conn->get_errormsg ();

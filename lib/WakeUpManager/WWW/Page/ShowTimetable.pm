@@ -113,6 +113,8 @@ sub get_content_elements () {
 		foreach my $key (keys %{$result_hash}) {
 			$content_elements->{$key} = $result_hash->{$key};
 		}
+
+		$content_elements->{result} = 1;
 	}
 
 	return $content_elements;
@@ -206,7 +208,7 @@ sub _show_timetable () {
 	return {
 		box_head_name => 1,
 		timetable => $host_name,
-		result => $result,
+		content => $result,
 	};
 }
 

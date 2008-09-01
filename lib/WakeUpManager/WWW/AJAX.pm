@@ -249,11 +249,16 @@ sub _return_result_box ($) { # _return_result_box (content) : HTML strings {{{
 	# If there is a template, use it.
 	if (defined $template) {
 		if (ref ($content) eq 'HASH') {
+			$template->param (result => 1);
+
 			foreach my $key (keys  %{$content}) {
 				$template->param ($key => $content->{$key});
 			}
 		} else {
-			$template->param (result => $content);
+			$template->param (
+				result => 1,
+				content => $content,
+			);
 		}
 		return $template->output ();
 	}
