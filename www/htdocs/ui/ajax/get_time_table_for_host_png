@@ -79,9 +79,9 @@ if (ref ($boot_times) ne 'HASH') {
 	exit 1;
 }
 
-if (! keys %{$boot_times}) {
-	exit 0;
-}
+#if (! keys %{$boot_times}) {
+#	exit 0;
+#}
 
 my $times_list = WakeUpManager::Common::Utils::get_times_list ($boot_times);
 

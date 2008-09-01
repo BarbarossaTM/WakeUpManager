@@ -4,18 +4,19 @@
 
 	<!-- If the user has the right to read the config of least on host //-->
 	<TMPL_IF host_loop>
-	 <form name="show_config_form" action="" method="POST">
+	 <form name="show_config_form" action="index.pl" method="POST">
 	  <p>
 	   Um sich die Konfiguration eines Rechners anzeigen zu lassen, w&auml;hlen Sie
 	   den gew&uuml;nschten PC aus der Liste aus und klicken Sie auf "Konfiguration anziegen".
 	  </p>
 
 	  <div class="box">
+	   <input type="hidden" name="page" value="ShowTimetable">
 	   <div class="box_head">&raquo; Zeitplan anzeigen</div>
 	   <div class="box_content">
 	    <TMPL_INCLUDE NAME="host_select.tmpl">
 
-	    <input type="button" value='Zeitplan anzeigen' onClick="showConfig();">
+	    <input type="submit" value='Zeitplan anzeigen' onmousedown="document.boot_host.action = 'javascript:showTimetable();'">
 	   </div>
 	  </div>
 	  <!-- box end //-->

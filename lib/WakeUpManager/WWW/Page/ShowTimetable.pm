@@ -10,6 +10,7 @@ use strict;
 use Carp qw(cluck confess);
 
 use WakeUpManager::WWW::Utils;
+use WakeUpManager::WWW::GraphLib;
 
 ##
 # Little bit of magic to simplify debugging
@@ -52,6 +53,7 @@ sub new () { # new () :  {{{
 
 		params => $params,
 	}, $class;
+
 
 	return $obj;
 } #}}}
@@ -105,7 +107,107 @@ sub get_content_elements () {
 		$content_elements->{host_loop} = WakeUpManager::WWW::Utils->gen_pretty_host_select ($allowed_hosts);
 	}
 
+	my $host_id = $self->{params}->get_http_param ('host_id');
+	if (defined $host_id) {
+		my $result_hash = $self->_show_timetable ();
+		foreach my $key (keys %{$result_hash}) {
+			$content_elements->{$key} = $result_hash->{$key};
+		}
+	}
+
 	return $content_elements;
+}
+
+sub ajax_call ($) {
+	my $self = shift;
+
+	my $func_name = shift;
+
+	return undef if (ref ($self) ne __PACKAGE__);
+	return undef if (! defined $func_name);
+
+	if ($func_name eq 'show_timetable') {
+		return $self->_show_timetable ();
+	} else {
+		return undef;
+	}
+}
+
+
+sub _show_timetable () {
+	my $self = shift;
+
+	return undef if (ref ($self) ne __PACKAGE__);
+
+	my $host_db_h = $self->{host_db_h};
+	if (! $host_db_h) {
+		return {
+			error => 1,
+			no_db_conn => 1,
+		};
+	}
+
+	my $host_id = $self->{params}->get_http_param ('host_id');
+	if (! $host_db_h->is_valid_host ($host_id)) {
+		return {
+			error => 1,
+			invalid_host_id => 1,
+		};
+	}
+
+	# Try to get users preference for timetable
+	my $orientation = $self->{params}->get_cookie ('timetable_orientation');
+	if (! defined $orientation || ($orientation ne 'horizontal' && $orientation ne 'vertical')) {
+		$orientation = 'horizonal';
+	}
+
+	my $user = $self->{params}->get_user ();
+	my $lang = $self->{params}->get_lang ();
+
+	my $gl = WakeUpManager::WWW::GraphLib->new ();
+
+	my $host_name = $host_db_h->get_host_name ($host_id);
+	if (! $host_name) {
+		$host_name = "#$host_id";
+	}
+
+	#
+	# Check if user is allow to show host config
+	if (! $host_db_h->user_can_read_host_config ($user, $host_id)) {
+		return {
+			error => 1,
+			user_not_allow_to_view_timetable => 1,
+		};
+	}
+
+	#
+	# Query DB for boot times
+	my $boot_times = $host_db_h->get_times_of_host ($host_id);
+	if (! $boot_times || ref ($boot_times) ne 'HASH') {
+		return {
+			error => 1,
+			unknown_error => 1,
+		};
+	}
+
+	if (! keys %{$boot_times}) {
+	}
+
+	my $times_list = WakeUpManager::Common::Utils::get_times_list ($boot_times);
+
+	my $result = "<img src=\"/ui/ajax/get_time_table_for_host_png?host_id=$host_id\" alt=\"\" usemap=\"#timetable\">\n";
+
+	if ($orientation eq 'vertical') {
+		$result .= $gl->get_timetable_vertical_map ($times_list, $host_id, $host_db_h->user_can_write_host_config ($user, $host_id));
+	} else {
+		$result .= $gl->get_timetable_horizontal_map ($times_list, $host_id, $host_db_h->user_can_write_host_config ($user, $host_id));
+	}
+
+	return {
+		box_head_name => 1,
+		timetable => $host_name,
+		result => $result,
+	};
 }
 
 1;
