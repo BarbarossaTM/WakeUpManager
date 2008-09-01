@@ -13,34 +13,9 @@ use WakeUpManager::Agent::Connector;
 use WakeUpManager::WWW::Utils;
 
 my $messages = { # {{{
-	invalid_host_id => {
-		en => "The given host_id is invalid.",
-		de => "Die angegebene host_id ist ung&uuml;tig.",
-	},
-
-	user_not_allowed => {
-		en => "You are not allowed to boot host %s!",
-		de => "Sie haben nicht das Recht den Rechner %s zu starten!",
-	},
-
 	booting_host => {
 		en => "Booting host <i>%s</i>.",
 		de => "Rechner <i>%s</i> wird gestartet.",
-	},
-
-	no_agent => {
-		en => "Internal error: Could not get agent connection.",
-		de => "Interner Fehler: Es konnte keine Verbindungn mit dem agent hergestellt werden.",
-	},
-
-	error_on_agent => {
-		en => "Internal error: Agent::Connector said: %s.",
-		de => "Interner Fehler: Agent::Connector meldet: %s.",
-	},
-
-	unknown_error => {
-		en => "An internal error occured.",
-		de => "Es ist ein interner Fehler aufgetreten.",
 	},
 }; # }}}
 
@@ -152,7 +127,10 @@ sub get_content_elements () {
 	# If the user submitted the form, let's go
 	#
 	if (defined $host_id) {
-		$content_elements->{result} = $self->_boot_host ();
+		my $result_hash = $self->_boot_host ();
+		foreach my $key (keys %{$result_hash}) {
+			$content_elements->{$key} = $result_hash->{$key};
+		}
 	}
 
 	return $content_elements;
@@ -187,30 +165,50 @@ sub _boot_host () {
 	my $user = $self->{user};
 	my $lang = $self->{lang};
 
+	my $content_elements = {};
+
+
 	if (! $self->{host_db_h}->is_valid_host ($host_id)) {
-		return  p_error ($messages->{invalid_host_id}->{$lang});
+		return {
+			error => 1,
+			invalid_host_id => 1,
+		};
 	}
 
 	my $host_name = $self->{host_db_h}->get_host_name ($host_id) || "#$host_id";
 
 	if (! $self->{host_db_h}->user_can_boot_host ($user, $host_id)) {
-		return p_error (sprintf ($messages->{user_not_allowed}->{$lang}, $host_name));
+		return {
+			error => 1,
+			user_not_allow_to_boot_host => $host_name,
+		};
 	}
 
 	my $agent_conn = WakeUpManager::Agent::Connector->new (host_db_h => $self->{host_db_h});
 	if (! $agent_conn) {
-		return p_error ($messages->{no_agent}->{$lang});
+		return {
+			error => 1,
+			no_agent => 1,
+		};
 	}
 
 	if ($agent_conn->boot_host ($host_id)) {
-		return sprintf ($messages->{booting_host}->{$lang}, $host_name);
+		return {
+			result => sprintf ($messages->{booting_host}->{$lang}, $host_name),
+		};
 	} else {
 		my $error_msg = $agent_conn->get_errormsg ();
 
 		if ($error_msg) {
-			return p_error (sprintf ($messages->{error_on_agent}->{$lang}, $error_msg));
+			return {
+				error => 1,
+				error_on_agent => $error_msg,
+			};
 		} else {
-			return p_error ($messages->{unknown_error}->{$lang});
+			return {
+				error => 1,
+				unknown_error => 1,
+			};
 		}
 	}
 }

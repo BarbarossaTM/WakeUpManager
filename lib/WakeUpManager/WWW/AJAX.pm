@@ -98,7 +98,7 @@ sub get_page () {
 		if ($page_logic) {
 			my $result = $page_logic->ajax_call ($self->{ajax_func_name});
 
-			if (defined $result) {
+			if (ref ($result) eq 'HASH') {
 				$output = $result;
 			} else {
 				$output = "An error occured while running AJAX call...\n";
@@ -248,10 +248,16 @@ sub _return_result_box ($) { # _return_result_box (content) : HTML strings {{{
 
 	# If there is a template, use it.
 	if (defined $template) {
-		$template->param (result => $content);
+		if (ref ($content) eq 'HASH') {
+			foreach my $key (keys  %{$content}) {
+				$template->param ($key => $content->{$key});
+			}
+		} else {
+			$template->param (result => $content);
+		}
 		return $template->output ();
-	} 
-	
+	}
+
 	# NO template available (why?!), push out the result as is.
 	else {
 		return $content;

@@ -1,7 +1,54 @@
 	  <TMPL_IF result>
 	   <div class="box">
-	    <div class="box_head">&raquo; Ergebnis</div>
+	    <div class="box_head">&raquo;
+	     <TMPL_IF box_head_name>
+	      <TMPL_IF timetable>Zeitplan f&uuml;r Rechner <TMPL_VAR timetable></TMPL_IF>
+	      <TMPL_IF host_state>Aktivierungsstatus f&uuml;r Rechner <TMPL_VAR host_state></TMPL_IF>
+	     <TMPL_ELSE>
+	      Ergebnis
+	     </TMPL_IF>
+	    </div>
 	    <div class="box_content">
+	     <TMPL_IF error>
+	      <p class="error">
+
+	      <TMPL_IF invalid_host_id>
+	       Fehler: Parameter 'host_id' nicht angeben oder ung&uuml;lig
+	      </TMPL_IF>
+
+	      <TMPL_IF unknown_error>
+	       Es ist ein interner Fehler aufgetreten.
+	      </TMPL_IF>
+
+	      <TMPL_IF no_db_conn>
+	       Interner Fehler: Es konnte keine Verbindungn zur Datenbank hergestellt werden.
+	      </TMPL_IF>
+
+
+	      <!-- BootHost //-->
+	      <TMPL_IF user_not_allow_to_boot_host>
+	       Sie haben nicht das Recht den Rechner <TMPL_VAR user_not_allow_to_boot_host> zu starten.
+	      </TMPL_IF>
+
+	      <TMPL_IF no_agent>
+	       Interner Fehler: Es konnte keine Verbindungn mit dem Agenten hergestellt werden.
+	      </TMPL_IF>
+
+	      <TMPL_IF error_on_agent>
+	       Interner Fehler: Agent::Connector meldet: <TMPL_VAR error_on_agent>.
+	      </TMPL_IF>
+
+
+	      <!-- ShowTimetable //-->
+	      <TMPL_IF user_not_allow_to_view_timetable>
+	        Sie haben nicht das Recht den Zeitplan des Rechners <TMPL_VAR user_not_allow_to_view_timetable> einzusehen.
+	      </TMPL_IF>
+
+
+	      <!-- HostState //-->
+
+	      </p>
+	     </TMPL_IF>
 	     <TMPL_VAR result>
 	    </div>
 	   </div>
