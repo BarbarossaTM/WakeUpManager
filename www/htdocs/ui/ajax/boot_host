@@ -12,7 +12,6 @@ use WakeUpManager::WWW;
 #
 # WWW lib
 my $www = WakeUpManager::WWW->new (
-	contentless_mode => 1,
 	ajax_mode => 1,
 	ajax_page_name => 'BootHost',
 	ajax_func_name => 'boot_host');
