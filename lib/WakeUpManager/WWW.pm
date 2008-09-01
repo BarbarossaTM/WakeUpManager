@@ -86,18 +86,19 @@ sub new () { # new () :  {{{
 	if (! $args->{no_header}) {
 		print $cgi_h->header ('text/html');
 	}
-	if (! $args->{contentless_mode}) {
-		require WakeUpManager::WWW::Page;
-		$obj->{page} = WakeUpManager::WWW::Page->new (params => $obj->{params});
-	}
 
-	if ($args->{ajax_mode}) {
-		require WakeUpManager::WWW::AJAX;
-		$obj->{page} = WakeUpManager::WWW::AJAX->new (
-			params => $obj->{params},
-			ajax_page_name => $args->{ajax_page_name},
-			ajax_func_name => $args->{ajax_func_name},
-		);
+	if (! $args->{contentless_mode}) {
+		if ($args->{ajax_mode}) {
+			require WakeUpManager::WWW::AJAX;
+			$obj->{page} = WakeUpManager::WWW::AJAX->new (
+				params => $obj->{params},
+				ajax_page_name => $args->{ajax_page_name},
+				ajax_func_name => $args->{ajax_func_name},
+			);
+		} else {
+			require WakeUpManager::WWW::Page;
+			$obj->{page} = WakeUpManager::WWW::Page->new (params => $obj->{params});
+		}
 	}
 
 	return $obj;
