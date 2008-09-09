@@ -29,15 +29,15 @@
 	}
 
 	function setHostState(){
-		var boot_host = document.forms.host_state_update.elements.boot_host.value;
-		var shutdown_host = document.forms.host_state_update.elements.shutdown_host.value;
+		var boot_host = document.forms.host_state_update.elements.boot_host.checked;
+		var shutdown_host = document.forms.host_state_update.elements.shutdown_host.checked;
 
 		var url = '/ui/ajax/set_host_state?host_id=' + document.getElementsByName('host_id')[0].value;
 
 		if (boot_host)
-			url = url + '&boot_host=' + boot_host;
+			url = url + '&boot_host=boot_host';
 		if (shutdown_host)
-			url = url + '&shutdown_host=' + shutdown_host;
+			url = url + '&shutdown_host=shutdown_host';
 
 		var errormsg = "<span class='error'>Could not save host state!</span>";
 
