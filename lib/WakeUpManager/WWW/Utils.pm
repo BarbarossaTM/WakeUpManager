@@ -55,6 +55,9 @@ sub gen_pretty_hostgroup_tree_select ($;$) { # gen_pretty_hostgroup_tree_select 
 		confess __PACKAGE__ . "->pp_hostgroup_tree(): No or invalid 'hostgroup_tree' parameter.\n";
 	}
 
+	# All
+	push @hostgroup_list, { key => 'ALL', val => 'ALL' };
+
 	my $first_print_level = undef;
 	if (! $hostgroup_whitelist || ($hostgroup_whitelist && $hostgroup_whitelist->{$top_hostgroup_tree->{id}})) {
 		push @hostgroup_list, { key => $top_hostgroup_tree->{id}, val => $top_hostgroup_tree->{name} };

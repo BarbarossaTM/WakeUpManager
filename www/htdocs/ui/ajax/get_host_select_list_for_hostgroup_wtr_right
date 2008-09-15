@@ -39,10 +39,13 @@ if (! $host_db) {
 }
 
 my $hosts;
-my $hg_name = $host_db->get_hostgroup_name ($hg_id) || "#$hg_id";
-if ($hg_name && $hg_name eq 'ALL') {
+my $hg_name;
+
+if ($hg_id eq 'ALL') {
+	$hg_name = 'ALL';
 	$hosts = $host_db->_hosts_user_has_right_on ($user, $right);
 } else {
+	$hg_name = $host_db->get_hostgroup_name ($hg_id) || "#$hg_id";
 	$hosts = $host_db->_hosts_of_hostgroup_user_has_right_on ($hg_id, $user, $right);
 }
 
