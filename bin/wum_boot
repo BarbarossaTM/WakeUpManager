@@ -61,7 +61,7 @@ if (! ($opt_hostname =~ m/\./) && $ui_opts->{hostname_autocompletion}) {
 
 # Get URL of RPC connection for UI
 if (! $ui_opts->{RPC_URL}) {
-	print STDERR "Error: RPC_URL no set in config file \"$opt_config_file\".\n";
+	print STDERR "Error: RPC_URL not set in config file \"$opt_config_file\".\n";
 	exit 2;
 }
 
