@@ -14,10 +14,11 @@
 package WakeUpManager::WWW;
 
 use strict;
-use Carp;
+use Carp qw(cluck confess);
 
 use CGI;
 
+use WakeUpManager::Config;
 use WakeUpManager::WWW::Params;
 
 my $supported_languages = {
@@ -69,6 +70,13 @@ sub new () { # new () :  {{{
 	}, $class;
 
 	#
+	# read wum.conf
+	$obj->{config} = WakeUpManager::Config-> new (config_file => "/etc/wum/wum.conf");
+	if (ref ($obj->{config} ne 'WakeUpManager::Config')) {
+		cluck __PACKAGE__ . "->new(): Could not get 'wum_config'...";
+	}
+
+	#
 	# init
 	$obj->{http_params} = $obj->_get_all_cgi_params ($cgi_h);
 	if (! $obj->{http_params}) {
@@ -76,6 +84,7 @@ sub new () { # new () :  {{{
 	}
 
 	$obj->{params} = WakeUpManager::WWW::Params->new (
+		config => $obj->{config},
 		http_params => $obj->{http_params},
 		auth => $obj->_get_user_info (),
 		lang => $obj->_get_lang (),
@@ -192,18 +201,52 @@ sub _get_all_cookies ($) { # _get_all_cookies (\CGI) : \%cookies {{{
 sub _get_user_info () { # _get_user_info () : \%user_info {{{
 	my $self = shift;
 
+	my $config = $self->{config};
+
 	if (ref ($self) ne __PACKAGE__) {
 		confess __PACKAGE__ . "->_get_all_params(): Has to be called on bless'ed object.\n";
 	}
 
+	my $user_info = {
+		user => undef,
+		realm => undef,
+
+		valid_realm => undef,
+		orig_user => undef,
+	};
+
 	my $user = $ENV{'REMOTE_USER'};
-	if (defined $user) {
-		$user =~ s/@.*$//;
-	} else {
-		$user = "";
+	if (defined $user && $user =~ m/^[^[:space:]]+@[[:alnum:].]+$/) {
+		$user_info->{user} = $1;
+		$user_info->{realm} = $2;
+
+		my $www_opts = $config->WWW_opts ();
+		# Ok, got auth data from webserver.
+		# If there are auth related config options honor them...
+		if (ref ($www_opts) eq 'HASH') {
+
+			# If there is a list of accepted realms, check for it
+			if (ref ($www_opts->{accept_REALMs}) eq 'ARRAY' && @{$www_opts->{accept_REALMs}}) {
+				$user_info->{valid_realm} = 0;
+
+				foreach my $realm (@{$www_opts->{accept_REALMs}}) {
+					if ($user_info->{realm} eq $realm) {
+						$user_info->{valid_realm} = 1;
+						last;
+					}
+				}
+
+			}
+
+			# Superseed the username if configured
+			if (defined $www_opts->{superseed_username_to} && length ($www_opts->{superseed_username_to})) {
+				$user_info->{orig_user} = $user_info->{user};
+				$user_info->{user} = $www_opts->{superseed_username_to};
+			}
+		}
 	}
 
-	return { user => $user };
+	return $user_info;
 } # }}}
 
 sub _get_lang () { # _get_lang () : <lang> {{{
