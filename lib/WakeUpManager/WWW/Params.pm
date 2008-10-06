@@ -68,6 +68,11 @@ sub new () { # new () :  {{{
 		confess __PACKAGE__ . "->new(): No or invalid 'cookies' argument.\n";
 	}
 
+	my $config = $args->{config};
+	if (! $config || ref ($config) ne 'WakeUpManager::Config') {
+		confess __PACKAGE__ . "->new(): No or invalid 'config' argument.\n";
+	}
+
 	my $obj = bless {
 		debug => $debug,
 		verbose => $verbose,
@@ -77,6 +82,7 @@ sub new () { # new () :  {{{
 		lang => $lang,
 		env => $env,
 		cookies => $cookies,
+		config => $config,
 
 		auth => $auth,
 	}, $class;
@@ -173,7 +179,7 @@ sub get_cookie ($) { # get_cookie (cookies_name) : cookie_value {{{
 	my $cookie_name = shift;
 
 	if (! $self || ref ($self) ne __PACKAGE__) {
-		confess __PACKAGE__ . "->get_env_var(): Has to be called on bless'ed object.\n";
+		confess __PACKAGE__ . "->get_cookie(): Has to be called on bless'ed object.\n";
 	}
 
 	if (! defined $cookie_name) {
@@ -181,6 +187,16 @@ sub get_cookie ($) { # get_cookie (cookies_name) : cookie_value {{{
 	}
 
 	return $self->{cookies}->{$cookie_name};
+} # }}}
+
+sub get_config ($) { # get_config () : config_object {{{
+	my $self = shift;
+
+	if (! $self || ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->get_config(): Has to be called on bless'ed object.\n";
+	}
+
+	return $self->{config};
 } # }}}
 
 
