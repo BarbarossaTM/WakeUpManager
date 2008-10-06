@@ -245,21 +245,23 @@ sub get_content_elements () {
 		$content_elements->{timetable} = $table_data->{timetable};
 
 		if ($submitted && $table_data->{error_count} == 0) {
+			$content_elements->{result} = 1;
+
 			my $equal_times_lists = equal_times_lists ($times_list_from_db, $times_list);
 			if (! defined $equal_times_lists) {
-				$content_elements->{result} = $result_message->{error}->{$lang};
+				$content_elements->{content} = $result_message->{error}->{$lang};
 				return $content_elements;
 			}
 
 			if ($equal_times_lists) {
-				$content_elements->{result} = $result_message->{unchanged}->{$lang};
+				$content_elements->{content} = $result_message->{unchanged}->{$lang};
 			} else {
 				my $ret = $host_db->update_timetable_of_host ($host_id, $times_list);
 
 				if ($ret == 1) {
-					$content_elements->{result} = $result_message->{saved}->{$lang};
+					$content_elements->{content} = $result_message->{saved}->{$lang};
 				} else {
-					$content_elements->{result} = $result_message->{error}->{$lang};
+					$content_elements->{content} = $result_message->{error}->{$lang};
 				}
 			}
 		}
