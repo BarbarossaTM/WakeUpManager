@@ -9,7 +9,6 @@ package WakeUpManager::WWW::Page;
 use strict;
 use Carp qw(cluck confess);
 
-use WakeUpManager::Config;
 use WakeUpManager::DB::HostDB;
 
 use HTML::Template;
@@ -55,13 +54,6 @@ sub new () { # new () :  {{{
 		confess __PACKAGE__ . "->new(): No or invalid 'params' argument.\n";
 	}
 
-        # Read wum.conf
-	my $wum_config = WakeUpManager::Config-> new (config_file => "/etc/wum/wum.conf");
-	if (! $wum_config) {
-		cluck __PACKAGE__ . "->new(): Could not get 'wum_config'...";
-		return undef;
-	}
-
 	# Setup DB handle but don't check it here!
 	my $host_db_h = WakeUpManager::DB::HostDB-> new (dbi_param => $wum_config->get_dbi_param ('HostDB'));
 
@@ -72,7 +64,7 @@ sub new () { # new () :  {{{
 		verbose => $verbose,
 
 		params => $args->{params},
-		wum_config => $wum_config,
+		wum_config => $args->{params}->get_config (),
 		host_db_h => $host_db_h,
 
 		templates => {},
