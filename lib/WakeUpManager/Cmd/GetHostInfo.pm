@@ -60,10 +60,8 @@ sub new () { # new () :  {{{
 
 	# Setup DB connection
 	my $host_db = WakeUpManager::DB::HostDB->new (dbi_param => $dbi_param);
-	if (! $host_db) {
-		confess __PACKAGE__ . "->new(): Could not connect to database.\n";
-		return undef;
-	}
+	# Don't check db handle here, do it in get_host_info() instead.
+
 	my $obj = bless {
 		debug => $debug,
 		verbose => $verbose,
@@ -92,6 +90,12 @@ sub get_host_info () { # boot_host () : \%{ host_state, timetable } {{{
 
 	$self->{error_no} = 0;
 	$self->{error_msg} = "";
+
+	if (! $host_db_h) {
+		$self->{error_no} = -4;
+		$self->{error_msg} = "Could not connect to database.\n";
+		return undef;
+	}
 
 	my $host_name = $self->{preset_hostname};
 	my $host_id = $host_db->get_host_id ($host_name);
