@@ -91,7 +91,7 @@ sub get_host_info () { # boot_host () : \%{ host_state, timetable } {{{
 	$self->{error_no} = 0;
 	$self->{error_msg} = "";
 
-	if (! $host_db_h) {
+	if (! $host_db) {
 		$self->{error_no} = -4;
 		$self->{error_msg} = "Could not connect to database.\n";
 		return undef;

@@ -55,6 +55,7 @@ sub new () { # new () :  {{{
 	}
 
 	# Setup DB handle but don't check it here!
+	my $wum_config = $params->get_config ();
 	my $host_db_h = WakeUpManager::DB::HostDB-> new (dbi_param => $wum_config->get_dbi_param ('HostDB'));
 
 	#
@@ -64,7 +65,7 @@ sub new () { # new () :  {{{
 		verbose => $verbose,
 
 		params => $args->{params},
-		wum_config => $args->{params}->get_config (),
+		wum_config => $wum_config,
 		host_db_h => $host_db_h,
 
 		templates => {},
