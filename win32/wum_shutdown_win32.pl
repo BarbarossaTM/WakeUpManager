@@ -145,12 +145,18 @@ elsif ($boot_time[3] - $now[3] == 1 &&
 my $pcItems = $objWMIService->ExecQuery("SELECT * FROM Win32_ComputerSystem", "WQL",
 	wbemFlagReturnImmediately | wbemFlagForwardOnly);
 
-my $UserName = undef;
+my $user_count = 0;
 foreach my $item (in $pcItems) {
-	$UserName = $item->{UserName};
+	$user_count++;
 }
-if ($UserName) {
-	log_msg ("info", "User $UserName is logged in. Staying cool.\n");
+
+if ($user_count > 0) {
+	if ($user_count == 1) {
+		log_msg ("info", "There is one user logged in. Staying cool.\n");
+	} else {
+		log_msg ("info", "There are $user_count users logged in. Staying cool.\n");
+	}
+
 	exit 0;
 }
 
