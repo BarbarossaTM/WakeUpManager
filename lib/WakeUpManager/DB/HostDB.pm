@@ -502,7 +502,7 @@ sub _user_has_right_on_host ($$$) { # _user_has_right_on_host (uid, host_id, rig
 	return undef if (ref ($self) ne __PACKAGE__);
 
 	# Do we know about the requested right?
-	if (! defined $valid_right->{$right}) {
+	if (! defined $valid_rights->{$right}) {
 		return undef;
 	}
 
@@ -616,7 +616,7 @@ sub _user_has_right_on_hostgroup ($$$) { # _user_has_right_on_hostgroup (uid, ri
 	return undef if (ref ($self) ne __PACKAGE__);
 
 	# Do we know about the requested right?
-	if (! defined $valid_right->{$right}) {
+	if (! defined $valid_rights->{$right}) {
 		return undef;
 	}
 
@@ -725,7 +725,7 @@ sub _hosts_user_has_right_on ($$) { # _hosts_user_has_right_on (uid, right) : \%
 	return undef if (ref ($self) ne __PACKAGE__);
 
 	# Do we know about the requested right?
-	if (! defined $valid_right->{$right}) {
+	if (! defined $valid_rights->{$right}) {
 		return undef;
 	}
 
@@ -821,7 +821,7 @@ sub _hosts_of_hostgroup_user_has_right_on ($$) { # _hosts_user_has_right_on (hos
 	}
 
 	# Do we know about the requested right?
-	if (! defined $valid_right->{$right}) {
+	if (! defined $valid_rights->{$right}) {
 		return undef;
 	}
 
@@ -889,7 +889,7 @@ sub _hostgroups_user_has_right_on ($$) { # _hostgroups_user_has_right_on (uid, r
 	return undef if (ref ($self) ne __PACKAGE__);
 
 	# Do we know about the requested right?
-	if (! defined $valid_right->{$right}) {
+	if (! defined $valid_rights->{$right}) {
 		return undef;
 	}
 
