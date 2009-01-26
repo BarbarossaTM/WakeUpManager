@@ -1243,6 +1243,7 @@ sub get_times_of_host ($) { # get_times_of_host (host_id) : \%times->{day}->{tim
 	return $sth->fetchall_hashref (['day', 'time']);
 } # }}}
 
+
 sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next_window (time_window) : \@hosts {{{
 	my $self = shift;
 
@@ -1329,8 +1330,6 @@ sub get_hosts_to_start_within_next_window ($) { # get_hosts_to_start_within_next
 
 	return $sth->fetchall_arrayref ();
 } # }}}
-
-
 
 sub get_hosts_to_start_within_next_window_admin ($) { # get_hosts_to_start_within_next_window_admin (time_window) : \@hosts {{{
 	my $self = shift;
@@ -1440,6 +1439,7 @@ sub get_hosts_to_start_within_next_window_admin ($) { # get_hosts_to_start_withi
 
 	return \@host_list;
 } # }}}
+
 
 sub get_hostgroups_using_admin_config_set ($) { # get_hostgroups_using_admin_config_set (\@config_set_list) : \@hosts # {{{
 	my $self = shift;
@@ -1671,6 +1671,24 @@ sub update_timetable_of_host ($$) { # update_timetable_of_host (host_id, \%times
 	$sth_update_host->execute ();
 
 	$self->{db_h}->commit ();
+} # }}}
+
+
+sub get_preset_config_sets () { # get_preset_config_sets () : \%{ csid -> {csid, name} } {{{
+	my $self = shift;
+
+	if (ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->update_timetable_of_host(): Has to be called on bless'ed object.\n";
+	}
+
+	my $sth= $self->{db_h}->prepare ("
+		SELECT	csid, name
+		FROM	config_set
+		WHERE	preset = 't'
+	") or die;
+	$sth->execute () or die;
+
+	return $sth->fetchall_hashref ('csid');
 } # }}}
 
 
