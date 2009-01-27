@@ -155,13 +155,49 @@ sub get_host_state ($) { # get_host_state (host_id) : { boot_host => 0/1, shutdo
 	return undef if (! defined $host_id || $host_id =~ m/[^0-9]/);
 
 	my $sth = $self->{db_h}->prepare ("
-		SELECT	boot_host, shutdown_host
+		SELECT	boot_host, shutdown_host, hostgroup_id
 		FROM	host
 		WHERE	host_id = :host_id") or confess ();
 	$sth->bind_param (":host_id", $host_id) or confess ();
 	$sth->execute () or confess ();
 
-	return $sth->fetchrow_hashref ();
+	#
+	# Get state settings for this host
+	my $host_info_hash = $sth->fetchrow_hashref ();
+
+	#
+	# Check for disable_shutdown flag for hostgroup and hostgroups upwards in the tree
+	my $disable_shutdown = 0;
+
+	my $sth_hg = $self->{db_h}->prepare ("
+		SELECT	super_group_id
+		FROM	hostgroup_tree
+		WHERE	member_group_id = :hg_id
+	") or confess ();
+
+	my $hg_id = $host_info_hash->{hostgroup_id};
+	delete $host_info_hash->{hostgroup_id};
+
+	while (defined $hg_id) {
+		if ($self->get_hostgroup_shutdownoverride ($hg_id)) {
+			$disable_shutdown = 1;
+			last;
+		}
+
+		$sth_hg->bind_param (":hg_id", $hg_id) or confess ();
+		$sth_hg->execute () or confess ();
+
+		if ($sth_hg->rows() == 0) {
+			last;
+		}
+
+		my @rowdata = $sth_hg->fetchrow ();
+		$hg_id = $rowdata[0];
+	}
+
+	$host_info_hash->{disable_shutdown} = $disable_shutdown;
+
+	return $host_info_hash;
 } # }}}
 
 sub set_host_state ($$$) { # set_host_state (host_id, boot_host, shutdown_host) :  {{{
