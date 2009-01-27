@@ -216,11 +216,11 @@ sub _get_user_info () { # _get_user_info () : \%user_info {{{
 	};
 
 	my $user = $ENV{'REMOTE_USER'};
-	if (defined $user && $user =~ m/^[^[:space:]]+@[[:alnum:].]+$/) {
+	if (defined $user && $user =~ m/^([^[:space:]]+)@([[:alnum:].-]+)$/) {
 		$user_info->{user} = $1;
 		$user_info->{realm} = $2;
 
-		my $www_opts = $config->WWW_opts ();
+		my $www_opts = $config->get_WWW_opts ();
 		# Ok, got auth data from webserver.
 		# If there are auth related config options honor them...
 		if (ref ($www_opts) eq 'HASH') {
