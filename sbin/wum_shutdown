@@ -276,7 +276,7 @@ if (! defined $result || ! rpc_result_ok ($result)) {
 	}
 
 	# If host is not active, no reboot via WUM at all
-	if (! $rpc_value->{host_state}->{shutdown_host}) {
+	if (! $rpc_value->{host_state}->{shutdown_host} || $rpc_value->{host_state}->{disable_shutdown}) {
 		log_msg ("info", "Host should not be shut down. Staying cool.\n");
 		exit 1;
 	}
