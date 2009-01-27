@@ -83,6 +83,7 @@ CREATE TABLE hostgroup (
 	name varchar(42) not null,
 	admin_csid integer,
 	description varchar(256),
+	disable_shutdown boolean default false,
 	foreign key (admin_csid) REFERENCES config_set (csid)
 );
 
