@@ -201,6 +201,27 @@ sub set_host_state ($$$) { # set_host_state (host_id, boot_host, shutdown_host) 
 	$sth->execute () or confess ();
 } # }}}
 
+
+sub get_hostgroup_shutdownoverride ($) { # get_hostgroup_shutdownoverride (hostgroup_id) : 0/1 {{{
+	my $self = shift;
+
+	my $hostgroup_id = shift;
+
+	return undef if (ref ($self) ne __PACKAGE__);
+	return undef if (! defined $hostgroup_id || $hostgroup_id =~ m/[^0-9]/);
+
+	my $sth = $self->{db_h}->prepare ("
+		SELECT	disable_shutdown
+		FROM	hostgroup
+		WHERE	hostgroup_id = :hostgroup_id") or confess ();
+	$sth->bind_param (":hostgroup_id", $hostgroup_id) or confess ();
+	$sth->execute () or confess ();
+
+	my @rowdata = $sth->fetchrow ();
+
+	return $rowdata[0];
+} # }}}
+
 #
 # Get all information necessary to boot the given host
 sub get_host_boot_info ($) { # get_network_id_of_host (host_id) : { net_id => int, mac_addr => MAC, net_cidr => CIDR }  {{{
