@@ -1,6 +1,6 @@
 #!/usr/bin/perl -WT
 #
-# Boot host unconditionally
+# Boot host or hostgroups unconditionally
 #
 # Maximilian Wilhelm <max@rfc2324.org>
 #  -- Mon, 16 Jun 2008 00:11:43 +0200
@@ -13,10 +13,10 @@ use WakeUpManager::WUM::Config;
 
 use Socket;
 
-my @hosts = @ARGV;
+my @args = @ARGV;
 
-if (! @hosts) {
-	print STDERR "Usage: $0 host1 [host2 [...]]\n";
+if (! @args) {
+	print STDERR "Usage: $0 host1 [host2 [...]] \@hostgroup1 [...]\n";
 	exit 1;
 }
 
@@ -33,26 +33,64 @@ if (! $connector) {
 	die "Error: Could not fire up Agent::Connector.\n";
 }
 
-foreach my $host (@hosts) {
-	if (! ($host =~ m/\./)) {
-		my ($name, $aliases, $addrtype, $length, @addrs) = gethostbyname ($host);
-		if (! $name) {
-			print STDERR "Can't autocomplete hostname \"$host\". SKipping\n";
+#
+# Hash with hosts to be bootet
+my $hosts_to_boot = {};
+
+#
+# Parse command line arguments (host or hostgroup names)
+foreach my $arg (@args) {
+	# Is argument a hostgroup name?
+	if ($arg =~ m/^@(\w+)$/) {
+		my $hg_id = $host_db->get_hostgroup_id ($1);
+		if (! $hg_id) {
+			print STDERR "Error: Invalid hostgroup \"$1\".\n";
 			next;
 		}
 
-		$host = $name;
+		my $hosts = $host_db->get_hosts_in_hostgroup ($hg_id);
+		if ($hosts) {
+			# Push hosts into boot list
+			foreach my $item (keys %{$hosts}) {
+				$hosts_to_boot->{$item} = $hosts->{$item};
+			}
+		}
 	}
 
-	my $host_id = $host_db->get_host_id ($host);
-	if (! $host_id) {
-		print STDERR "Error: Invalid host \"$host\".\n";
-		next;
+	# No hostgroup name, host name?
+	else {
+		# Not an FQDN?
+		if (! ($arg =~ m/\./)) {
+			my ($name, $aliases, $addrtype, $length, @addrs) = gethostbyname ($arg);
+			if (! $name) {
+				print STDERR "Can't autocomplete hostname \"$arg\". Skipping\n";
+				next;
+			}
+
+			$arg = $name;
+		}
+
+		my $host_id = $host_db->get_host_id ($arg);
+		if (! $host_id) {
+			print STDERR "Error: Invalid host \"$arg\".\n";
+			next;
+		}
+
+		$hosts_to_boot->{$host_id} = {
+		                               id => $host_id,
+		                               name => $arg };
 	}
+}
+
+#
+# Boot all the hosts...
+foreach my $host_id (keys %{$hosts_to_boot}) {
+	my $hostname = $hosts_to_boot->{$host_id}->{name};
 
 	if ($connector->boot_host ($host_id)) {
-		print "Booting host \"$host\".\n";
+		print "Booting host \"$hostname\".\n";
 	} else {
-		print "Booting host \"$host\ FAILED!\n";
+		print "Booting host \"$hostname\ FAILED!\n";
 	}
+
 }
