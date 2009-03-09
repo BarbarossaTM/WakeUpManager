@@ -193,7 +193,6 @@ sub get_mgnt_opts () { # get_mgnt_opts () : \%mgnt_opts {{{
 	return $self->{config}->{USER_MGNT};
 } # }}}
 
-
 sub get_WWW_opts () { # get_WWW_opts () : \%WWW_opts {{{
 	my $self = shift;
 
@@ -202,6 +201,20 @@ sub get_WWW_opts () { # get_WWW_opts () : \%WWW_opts {{{
 	}
 
 	return $self->{config}->{WWW};
+} # }}}
+
+sub get_extension_opts ($) { # get_extension_opts (Extension_name) : \%options {{{
+	my $self = shift;
+
+	my $ext_name = shift;
+
+	return undef if (ref ($self) ne __PACKAGE__);
+
+	return undef if (! defined $ext_name);
+	return undef if (! defined $self->{config}->{extensions}->{$ext_name});
+	return undef if (ref ($self->{config}->{extensions}->{$ext_name}) ne 'HASH');
+
+	return $self->{config}->{extensions}->{$ext_name};
 } # }}}
 
 1;
