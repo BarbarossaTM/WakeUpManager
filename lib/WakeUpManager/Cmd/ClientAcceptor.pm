@@ -4,7 +4,7 @@
 #  --  Sun 08 Jun 2008 11:02:33 PM CEST
 #
 
-package WakeUpManager::Cmd::GetHostInfo;
+package WakeUpManager::Cmd::ClientAcceptor;
 
 use strict;
 use Carp;
