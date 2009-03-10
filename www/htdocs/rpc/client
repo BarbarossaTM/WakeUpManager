@@ -6,7 +6,7 @@
 
 use strict;
 
-use WakeUpManager::Cmd::GetHostInfo;
+use WakeUpManager::Cmd::ClientAcceptor;
 use WakeUpManager::RPC::Wrapper;
 use WakeUpManager::WWW;
 
@@ -48,12 +48,12 @@ if (! $hostname) {
 }
 
 
-my $boot_host_cmd = WakeUpManager::Cmd::GetHostInfo->new (preset_hostname => $hostname);
-if (! $boot_host_cmd) {
+my $client_acceptor = WakeUpManager::Cmd::ClientAcceptor->new (preset_hostname => $hostname);
+if (! $client_acceptor) {
 	error "Content-Type: text/plain\n\nAn internal error occured. Please contact your system administrator.\n";
 }
 
-my $rpc_wrapper_boot_host = WakeUpManager::RPC::Wrapper->new (wrapper_obj => $boot_host_cmd);
+my $rpc_wrapper_boot_host = WakeUpManager::RPC::Wrapper->new (wrapper_obj => $client_acceptor);
 if (! $rpc_wrapper_boot_host) {
 	error "Content-Type: text/plain\n\nAn internal error occured. Please contact your system administrator.\n";
 }
