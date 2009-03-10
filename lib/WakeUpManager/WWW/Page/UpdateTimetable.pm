@@ -270,6 +270,21 @@ sub get_content_elements () {
 	return $content_elements;
 }
 
+sub _by_boot_time {
+	if (! ($a =~ m/^[0-2]?[0-9]:[0-5]?[0-9]/ && $b =~ m/^[0-2]?[0-9]:[0-5]?[0-9]/)) {
+		return 1;
+	}
+
+	my @a_time = split (':', $a->{boot});
+	my @b_time = split (':', $a->{boot});
+
+	my $a_minutes = $a_time[0] * 60 + $a_time[1];
+	my $b_minutes = $b_time[0] * 60 + $b_time[1];
+
+	return { $a_minutes <=> $b_minutes };
+}
+
+
 
 sub gen_table_from_timestable ($) { # gen_table_from_timestable (times_list) : HTML_string {{{
 	my $self = shift;
@@ -302,7 +317,7 @@ sub gen_table_from_timestable ($) { # gen_table_from_timestable (times_list) : H
 
 		my $last_shutdown_minutes = undef;
 
-		foreach my $item_hash (@{$day_hash}) {
+		foreach my $item_hash (sort _by_boot_time @{$day_hash}) {
 			my @errors = ();
 
 			# Increase entry number
