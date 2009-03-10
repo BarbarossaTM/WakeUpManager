@@ -10,11 +10,11 @@ use strict;
 use base 'Exporter';
 
 our @EXPORT    = qw();
-our @EXPORT_OK = qw(string2time dow_to_day get_times_list get_times_by_hour get_host_state order_times_list equal_times_lists sanitize_times_list);
+our @EXPORT_OK = qw(string2time dow_to_day get_times_list get_times_by_hour get_host_state order_times_list equal_times_lists sanitize_times_list get_next_event);
 our %EXPORT_TAGS = (
 	time => [qw(string2time dow_to_day)],
 	timetable => [qw(get_times_list get_times_by_hour order_times_list equal_times_lists sanitize_times_list)],
-	state => [qw(get_host_state)],
+	state => [qw(get_host_state get_next_event)],
 	all => \@EXPORT_OK
 );
 
@@ -324,7 +324,7 @@ sub get_host_state ($;$) { # get_current_host_state (\%timetable ; $window_width
 
 			# If the boot event is in the (wrt $windows_width) to close
 			# future or in the past (as we reached this code) and the
-			# shutdown event is in the future, ths host should be online.
+			# shutdown event is in the future, the host should be online.
 			if ($now_minutes < $shutdown_time_minutes) {
 				return "online";
 			}
@@ -396,7 +396,7 @@ sub _by_boot_time () { # {{{
 	}
 } # }}}
 
-sub sanitize_times_list ($) { # {{{ sanitize_times_list (\%times_list) : \%times_list {{{
+sub sanitize_times_list ($) { # sanitize_tsimes_list (\%times_list) : \%times_list {{{
 	my $times_list = shift;
 
 	if (ref ($times_list) ne 'HASH') {
@@ -432,6 +432,62 @@ sub sanitize_times_list ($) { # {{{ sanitize_times_list (\%times_list) : \%times
 	}
 
 	return $times_list;
+} # }}}
+
+sub get_next_event ($;$) { # get_next_event (\%timetable ; type (boot | shutdown)) : \{ action, day, time } {{{
+	my $timetable = shift;
+	my $event_type = shift;
+
+	if (! $timetable || ref ($timetable) ne 'HASH') {
+		return undef;
+	}
+
+	# Localtime will return (sec, min, hour, ?, ?, ?, dow, ...)
+	my @localtime = localtime (time);
+	my $dow = $localtime[6];
+	my $today = dow_to_day ($dow);
+	if (! $today) {
+		return undef;
+	}
+
+	# Build list of day names in week order starting by today
+	# and ending by today to be able to catch a week lasting
+	# time frame between two events
+	my @days = ($today);
+	for (my $i = 1; $i <= 7; $i++) {
+		my $day = dow_to_day (($dow + $i) % 7);
+		if (! $day) {
+			die "Loop dow (" . (($dow + $i) % 7) . "\n";
+			return undef;
+		}
+
+		push @days, $day;
+	}
+
+	my $now_minutes = $localtime[2] * 60 + $localtime[1];
+
+	foreach my $day (@days) {
+		foreach my $entry (sort _by_timestamp keys %{$timetable->{$day}}) {
+			my $entry_hash = $timetable->{$day}->{$entry};
+
+			# If filtering for a specific event type has been requested
+			# and this event does not match the filter, go on.
+			if (defined $event_type && $entry_hash->{action} ne $event_type) {
+				next;
+			}
+
+			# Get event time in minutes
+			my @entry_time = split (':', $entry_hash->{time});
+			my $time_minutes = $entry_time[0] * 60 + $entry_time[1];
+
+			# If the found event is in the future, it is the next one.
+			if ($now_minutes < $time_minutes) {
+				return $entry_hash;
+			}
+		}
+	}
+
+	return {};
 } # }}}
 
 #
