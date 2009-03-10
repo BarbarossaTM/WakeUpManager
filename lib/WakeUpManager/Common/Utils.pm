@@ -434,7 +434,7 @@ sub sanitize_times_list ($) { # sanitize_tsimes_list (\%times_list) : \%times_li
 	return $times_list;
 } # }}}
 
-sub get_next_event ($;$) { # get_next_event (\%timetable ; type (boot | shutdown)) : \{ action, day, time } {{{
+sub get_next_event ($;$) { # get_next_event (\%timetable ; type (boot | shutdown)) : \{ action, day, time, minutes_from_now } {{{
 	my $timetable = shift;
 	my $event_type = shift;
 
@@ -465,6 +465,7 @@ sub get_next_event ($;$) { # get_next_event (\%timetable ; type (boot | shutdown
 	}
 
 	my $now_minutes = $localtime[2] * 60 + $localtime[1];
+	my $minutes_from_now_total = 0;
 
 	foreach my $day (@days) {
 		foreach my $entry (sort _by_timestamp keys %{$timetable->{$day}}) {
@@ -482,8 +483,24 @@ sub get_next_event ($;$) { # get_next_event (\%timetable ; type (boot | shutdown
 
 			# If the found event is in the future, it is the next one.
 			if ($now_minutes < $time_minutes) {
+				if ($minutes_from_now_total == 0) {
+					# If the next event is today, the event is in (event time - now) minutes
+					$entry_hash->{minutes_from_now} = $time_minutes - $now_minutes;
+				} else {
+					# If the event isn't today add the time of the day(s) between mesured in
+					# minutes to the time of the event on the day it happens.
+					$entry_hash->{minutes_from_now} = $minutes_from_now_total + $time_minutes;
+				}
 				return $entry_hash;
 			}
+		}
+
+		if ($minutes_from_now_total == 0) {
+			# On the first day only add minutes till midnight
+			$minutes_from_now_total = 24 * 60 - $now_minutes;
+		} else {
+			# On other days add a whole day
+			$minutes_from_now_total += 24 * 60;
 		}
 	}
 
