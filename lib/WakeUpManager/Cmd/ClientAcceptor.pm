@@ -9,6 +9,7 @@ package WakeUpManager::Cmd::ClientAcceptor;
 use strict;
 use Carp;
 
+use WakeUpManager::Common::Utils qw(:state :time);
 use WakeUpManager::Config;
 use WakeUpManager::DB::HostDB;
 
@@ -43,15 +44,15 @@ sub new () { # new () :  {{{
 	}
 
 	# Get DBI parameters
+	my $wum_config = WakeUpManager::Config->new ();
+	if (! $wum_config) {
+		confess __PACKAGE__ . "->new(): Failed to load Config\n";
+	}
+
 	my $dbi_param = $args->{dbi_param};
 	if ($dbi_param && ref ($dbi_param) ne 'ARRAY') {
 		confess __PACKAGE__ . "->new(): Invalid dbi_param parameter.\n";
 	} else {
-		my $wum_config = WakeUpManager::Config->new ();
-		if (! $wum_config) {
-			confess __PACKAGE__ . "->new(): Failed to load Config\n";
-		}
-
 		$dbi_param = $wum_config->get_dbi_param ("HostDB");
 		if (! $dbi_param) {
 			confess __PACKAGE__ . "->new(): Failed to get dbi_param from wum.conf\n";
@@ -66,14 +67,29 @@ sub new () { # new () :  {{{
 		debug => $debug,
 		verbose => $verbose,
 
+		config => $wum_config,
 		host_db_h => $host_db,
 
 		preset_hostname => $preset_hostname,
 	}, $class;
 
+	# If activated, setup Nagios extension
+	$obj->{ext_nagios_config} = $wum_config->get_extension_opts ("nagios");
+	if (defined $obj->{ext_nagios_config} && $obj->{ext_nagios_config}->{active}) {
+		if (eval "require WakeUpManager::Ext::Nagios") {
+			# Ok, the Nagios extension should be activated and loadded,
+			# get an instance
+			$obj->{ext_nagios} = WakeUpManager::Ext::Nagios->new (
+				%{$obj->{ext_nagios_config}}
+				);
+		}
+	}
+
+
 	# Prepare for RPC::Wrapper wrappability
 	$obj->{methods} = {
 		'wakeUpManager.cmd.getHostInfo' => sub { $obj->get_host_info (@_) },
+		'wakeUpManager.cmd.hostShutdown' => sub { $obj->host_shutdown (@_) },
 	};
 
 	return $obj;
@@ -125,6 +141,52 @@ sub get_host_info () { # boot_host () : \%{ host_state, timetable } {{{
 	}
 } # }}}
 
+sub host_shutdown () { #  host_shutdown () : 0/1 {{{
+	my $self = shift;
+
+	if (ref ($self) ne __PACKAGE__) {
+		confess __PACKAGE__ . "->boot_host(): Has to be called on bless'ed object.\n";
+	}
+
+	$self->{error_no} = 0;
+	$self->{error_msg} = "";
+
+	my $host_db = $self->{host_db_h};
+
+	if ($self->{ext_nagios_config} && $self->{ext_nagios_config}->{active}) {
+		my $host_name = $self->{preset_hostname};
+		my $host_id = $host_db->get_host_id ($host_name);
+		if (! $host_id) {
+			$self->{error_no} = -1;
+			$self->{error_msg} = "Invalid hostname: \"$host_name\"\n";
+			return undef;
+		}
+
+		my $timetable = $host_db->get_times_of_host ($host_id);
+		if (! $timetable || ref ($timetable) ne 'HASH') {
+			$self->{error_no} = -2;
+			$self->{error_msg} = "Could not get timetable or timetable is invalid.\n";
+			return undef;
+		}
+
+		my $next_event = get_next_event ($timetable, 'boot');
+		if (! $next_event) {
+			$self->{error_no} = -3;
+			$self->{error_msg} = "Failed to get next_event from timetable.\n";
+			return undef;
+		}
+
+		my $hostname = $self->{preset_hostname};
+		$hostname =~ s/\..*$//;
+
+		$self->{ext_nagios}->schedule_downtime ($hostname, $next_event->{minutes_from_now}, undef);
+
+		return "$hostname :: $next_event->{minutes_from_now}";
+	}
+
+	return 2;
+} # }}}
+
 
 sub get_error_no () { # get_error_msg () : $self->{error_no} {{{
 	my $self = shift;
@@ -155,11 +217,6 @@ sub get_methods () { # get_methods () : \%methods {{{
 
 	return $self->{methods};
 } # }}}
-
-1;
-
-# vim:foldmethod=marker
-
 
 1;
 
