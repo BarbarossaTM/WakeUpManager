@@ -1,0 +1,14 @@
+++ Really shoud
+ * Example apache config
+ * Extension handling?
+
++ Should
+ * preset_config_set_select
+ * Events
+  * onHostShutdown
+  * onHostBootDisable / Enable
+  * onHostShutdownDisable / Enable
+  * ...
+
+o Might
+ * disable_shutdown_until?
