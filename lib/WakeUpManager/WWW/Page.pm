@@ -228,7 +228,7 @@ sub _is_valid_page ($) { # _is_valid_page (page_name) : int  {{{
 		foreach my $dir (@INC) {
 			if (-f "$dir/$mod_path.pm") {
 				# Hmm, module file exists, but seems to be errornous.
-				print STDERR "Error: Module for page \"$page\" exists in \"$dir\", but could not be loaded. Check \"$module\" for errors!";
+				print STDERR "Error: Module for page \"$page\" exists in \"$dir\", but could not be loaded. Check \"$module\" for errors!\n";
 				return -1;
 			}
 		}
@@ -320,23 +320,23 @@ sub _gen_menu () { # _gen_menu () : HTML_string for menu {{{
 	};
 
 	if ($lang eq 'de') {
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=BootHost\">Rechner starten</a><br>\n" if ($user_can_boot_hosts);
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=ShowTimetable\">Zeitplan anzeigen</a><br>\n" if ($user_can_read_host_config);
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=UpdateTimetable\">Zeitplan &auml;ndern</a><br>\n" if ($user_can_write_host_config);
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=HostState\">Aktivierungsstatus</a><br>\n" if ($user_can_read_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=BootHost\">Rechner starten</a><br>\n" if ($user_can_boot_hosts);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=ShowTimetable\">Zeitplan anzeigen</a><br>\n" if ($user_can_read_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=UpdateTimetable\">Zeitplan &auml;ndern</a><br>\n" if ($user_can_write_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=HostState\">Aktivierungsstatus</a><br>\n" if ($user_can_read_host_config);
 		$menu_HTML_string .= "\t  <br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=Preferences\">Einstellungen</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=Preferences\">Einstellungen</a><br>\n";
 		$menu_HTML_string .= "\t  <br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=About\">&Uuml;ber WakeUpManager</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=About\">&Uuml;ber WakeUpManager</a><br>\n";
 	} else {
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=BootHost\">Boot host</a><br>\n" if ($user_can_boot_hosts);;
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=ShowTimetable\">Show timetable</a><br>\n" if ($user_can_read_host_config);
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=UpdateTimetable\">Update timetable</a><br>\n" if ($user_can_write_host_config);
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=HostState\">Host activation state</a><br>\n" if ($user_can_read_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=BootHost\">Boot host</a><br>\n" if ($user_can_boot_hosts);;
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=ShowTimetable\">Show timetable</a><br>\n" if ($user_can_read_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=UpdateTimetable\">Update timetable</a><br>\n" if ($user_can_write_host_config);
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=HostState\">Host activation state</a><br>\n" if ($user_can_read_host_config);
 		$menu_HTML_string .= "\t  <br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=Preferences\">Preferences</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=Preferences\">Preferences</a><br>\n";
 		$menu_HTML_string .= "\t  <br>\n";
-		$menu_HTML_string .= "\t  &raquo; <a href=\"/ui/index.pl?page=About\">About WakeUpManager</a><br>\n";
+		$menu_HTML_string .= "\t  &raquo; <a href=\"index.pl?page=About\">About WakeUpManager</a><br>\n";
 	}
 
 	return $menu_HTML_string . "\t  </div>\n";
