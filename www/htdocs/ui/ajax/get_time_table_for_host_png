@@ -64,8 +64,7 @@ if (! $host_db) {
 
 my $gl = WakeUpManager::WWW::GraphLib->new ();
 
-my $user = $ENV{'REMOTE_USER'};
-$user =~ s/@.*$//;
+my $user = $params->get_auth_info()->{user};
 
 #
 # (Input) validation made easy, as we have to return an image
