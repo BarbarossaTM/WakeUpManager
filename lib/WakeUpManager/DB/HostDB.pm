@@ -91,13 +91,6 @@ sub new () { # new () : WakeUpManager::DB::HostDB {{{
 		db_h => $db_h,
 	}, $class;
 
-	# Disconnect at program end
-	END {
-		if ($db_h) {
-			$db_h->disconnect ();
-		}
-	};
-
 	return $obj;
 } #}}}
 
