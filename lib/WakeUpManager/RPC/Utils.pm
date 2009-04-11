@@ -28,8 +28,6 @@ use strict;
 use base 'Exporter';
 use Carp qw(cluck confess);
 
-use WakeUpManager::RPC::Result;
-
 # Functions to be exporter
 our @EXPORT = qw(rpc_return_err rpc_return_ok rpc_result_ok rpc_get_errmsg rpc_get_value);
 
@@ -50,17 +48,21 @@ sub rpc_return_err ($$) { # rpc_return_err (errcode : <int>, errormsg : <string>
 		return confess "rpc_return_err() called without errormsg.\n";
 	}
 
-	return WakeUpManager::RPC::Result->new (retcode => $errcode,
-						errormsg => $errormsg,
-						retval => undef);
+	return  {
+		retcode => $errcode,
+		errormsg => $errormsg,
+		retval => undef,
+	};;
 } # }}}
 
 sub rpc_return_ok (;$) { # rpc_return_ok (return value) : \WakeUpManager::RPC::Result {{{
 	my $retval = shift;
 
-	return WakeUpManager::RPC::Result->new (retval => $retval,
-						retcode => 0,
-						errormsg => undef);
+	return {
+		retval => $retval,
+		retcode => 0,
+		errormsg => undef,
+	};
 } # }}}
 
 
@@ -68,7 +70,7 @@ sub rpc_return_ok (;$) { # rpc_return_ok (return value) : \WakeUpManager::RPC::R
 sub rpc_result_ok ($) { # rpc_result_ok (\WakeUpManager::RPC::Result) : 0/1 {{{
 	my $rpc_result = shift;
 
-	if (! $rpc_result || ref ($rpc_result) ne "WakeUpManager::RPC::Result") {
+	if (! $rpc_result || ref ($rpc_result) ne 'HASH') {
 		confess __PACKAGE__ . "->rpc_get_errmsg called without/with invalid argument.\n";
 	}
 
@@ -79,7 +81,7 @@ sub rpc_result_ok ($) { # rpc_result_ok (\WakeUpManager::RPC::Result) : 0/1 {{{
 sub rpc_get_errmsg ($) { # rpc_get_errmsg (\WakeUpManager::RPC::Result) : string # {{{
 	my $rpc_result = shift;
 
-	if (! $rpc_result || ref ($rpc_result) ne "WakeUpManager::RPC::Result") {
+	if (! $rpc_result || ref ($rpc_result) ne 'HASH') {
 		confess __PACKAGE__ . "->rpc_get_errmsg called without/with invalid argument.\n";
 	}
 
@@ -98,7 +100,7 @@ sub rpc_get_errmsg ($) { # rpc_get_errmsg (\WakeUpManager::RPC::Result) : string
 sub rpc_get_value ($) { # rpc_get_value (\WakeUpManager::RPC::Result) : value # {{{
 	my $rpc_result = shift;
 
-	if (! $rpc_result || ref ($rpc_result) ne "WakeUpManager::RPC::Result") {
+	if (! $rpc_result || ref ($rpc_result) ne 'HASH') {
 		confess __PACKAGE__ . "->rpc_get_value called without/with invalid argument.\n";
 	}
 
