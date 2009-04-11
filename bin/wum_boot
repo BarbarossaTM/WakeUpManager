@@ -84,7 +84,7 @@ if (! $ui_opts->{RPC_URL}) {
 }
 
 # Setup RPC connection
-my $rpc_h = Frontier::Client->new (url => "$ui_opts->{RPC_URL}/rpc/ui");
+my $rpc_h = Frontier::Client->new (url => "$ui_opts->{RPC_URL}");
 if (! $rpc_h) {
 	print STDERR "Error: Coult not connect to server.\n";
 	exit 3;
@@ -98,7 +98,12 @@ eval {
 
 # Check the result of the RPC call
 if (! defined $result || ! rpc_result_ok ($result)) {
-print STDERR "Server reported: " . rpc_get_errmsg ($result) . "\n" if (defined $result);
+	if (defined $result) {
+		print STDERR "Server reported: " . rpc_get_errmsg ($result) . "\n";
+	} else {
+		print STDERR "There was an unknown error.\n";
+		print STDERR "Maybe the following information aids your system adminstrator to make go away: \"$@\".\n";
+	}
 	exit 1;
 } else {
 	if (defined $ENV{'LANG'} && $ENV{'LANG'} =~ m/^de_/) {

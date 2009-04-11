@@ -255,7 +255,7 @@ close (PS);
 
 # Setup RPC connection
 my $rpc_h = Frontier::Client->new (
-	url => "$client_opts->{RPC_URL}/rpc/client");
+	url => "$client_opts->{RPC_URL}");
 if (! $rpc_h) {
 	log_msg ("err", "Could not connect to server.\n");
 	print STDERR "Error: Could not connect to server.\n";
