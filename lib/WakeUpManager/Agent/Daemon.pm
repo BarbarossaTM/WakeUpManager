@@ -404,7 +404,7 @@ sub boot_pc ($$) { # boot_pc (mac_addr, ip_addr) : \WakeUpManager::RPC::Result {
 		return rpc_return_err (1, "$msg failed.\n");
 	} else {
 		log_msg ("info", "boot_pc(): $msg succeded.\n") if ($self->{verbose});
-		return rpc_return_ok ();
+		return rpc_return_ok ("");
 	}
 } # }}}
 
