@@ -29,7 +29,7 @@ use WakeUpManager::Common::Utils qw(:timetable :state);
 use WakeUpManager::RPC::Utils;
 use WakeUpManager::Config;
 
-use Frontier::Client 1.01;
+use Frontier::Client;
 use POSIX qw(strftime);
 
 use Win32::OLE('in');
@@ -186,9 +186,7 @@ if ($user_count > 0) {
 
 
 # Setup RPC connection
-my $rpc_h = Frontier::Client->new (
-	url => "$client_opts->{RPC_URL}/rpc/client",
-	handle_perl_objects => 1);
+my $rpc_h = Frontier::Client->new (url => "$client_opts->{RPC_URL}/rpc/client");
 if (! $rpc_h) {
 	log_and_die ("Could not connect to server.\n");
 }

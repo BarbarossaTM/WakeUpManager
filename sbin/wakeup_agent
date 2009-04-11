@@ -26,7 +26,7 @@ use Carp;
 
 use WakeUpManager::Agent::Daemon;
 
-use Frontier::Daemon 1.01;
+use Frontier::Daemon;
 
 my $daemon_port = 2342;
 
@@ -50,7 +50,6 @@ my $rpc_server = Frontier::Daemon::->new (
 		log_level => "info",
 		log_request_path => 0,
 	},
-	handle_perl_objects => 1,
 
 	no_autolisten => 1,
 );

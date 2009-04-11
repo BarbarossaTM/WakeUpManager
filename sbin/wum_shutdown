@@ -30,7 +30,7 @@ use WakeUpManager::Common::Utils qw(:timetable :state);
 use WakeUpManager::RPC::Utils;
 use WakeUpManager::Config;
 
-use Frontier::Client 1.01;
+use Frontier::Client;
 
 log_init ("wum_shutdown", "user");
 
@@ -255,8 +255,7 @@ close (PS);
 
 # Setup RPC connection
 my $rpc_h = Frontier::Client->new (
-	url => "$client_opts->{RPC_URL}/rpc/client",
-	handle_perl_objects => 1);
+	url => "$client_opts->{RPC_URL}/rpc/client");
 if (! $rpc_h) {
 	log_msg ("err", "Could not connect to server.\n");
 	print STDERR "Error: Could not connect to server.\n";

@@ -71,7 +71,7 @@ my $remote_addr = $params->get_env_var ('REMOTE_ADDR');
 
 
 # Fire up RPC2 serving stuff
-my $rpc2 = Frontier::RPC2->new (handle_perl_objects => 1);
+my $rpc2 = Frontier::RPC2->new ();
 if (! $rpc2) {
 	error "Content-Type: text/plain\n\nAn internal error occured. Please contact your system administrator.\n";
 }

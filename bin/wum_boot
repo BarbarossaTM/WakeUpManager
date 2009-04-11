@@ -28,7 +28,7 @@ use Carp;
 use WakeUpManager::RPC::Utils;
 use WakeUpManager::Config;
 
-use Frontier::Client 1.01;
+use Frontier::Client;
 use Getopt::Long;
 use Socket;
 
@@ -84,9 +84,7 @@ if (! $ui_opts->{RPC_URL}) {
 }
 
 # Setup RPC connection
-my $rpc_h = Frontier::Client->new (
-	url => "$ui_opts->{RPC_URL}/rpc/ui",
-	handle_perl_objects => 1);
+my $rpc_h = Frontier::Client->new (url => "$ui_opts->{RPC_URL}/rpc/ui");
 if (! $rpc_h) {
 	print STDERR "Error: Coult not connect to server.\n";
 	exit 3;

@@ -78,7 +78,7 @@ if (! $rpc_wrapper_boot_host) {
 
 
 # Fire up RPC2 serving stuff
-my $rpc2 = Frontier::RPC2->new (handle_perl_objects => 1);
+my $rpc2 = Frontier::RPC2->new ();
 if (! $rpc2) {
 	error "An internal error occured. Please contact your system administrator.\n";
 }

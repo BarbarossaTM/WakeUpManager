@@ -32,7 +32,7 @@ use Carp;
 use WakeUpManager::RPC::Utils;
 
 use Net::CIDR;
-use Frontier::Client 1.01;
+use Frontier::Client;
 
 #
 # Connect to agents on this port
@@ -77,9 +77,7 @@ sub new () { # new () :  {{{
 	}
 
 	# Try to connect to given Agent
-	my $agent_h = Frontier::Client->new (
-		url => "http://$agent_ip:$agent_port/RPC2",
-		handle_perl_objects => 1);
+	my $agent_h = Frontier::Client->new (url => "http://$agent_ip:$agent_port/RPC2");
 
 	if (! $agent_h) {
 		# XXX Logging?
