@@ -51,7 +51,7 @@ sub rpc_return_err ($$) { # rpc_return_err (errcode : <int>, errormsg : <string>
 	return  {
 		retcode => $errcode,
 		errormsg => $errormsg,
-		retval => undef,
+		retval => "",
 	};;
 } # }}}
 
@@ -61,7 +61,7 @@ sub rpc_return_ok (;$) { # rpc_return_ok (return value) : \rpc_result_hash {{{
 	return {
 		retval => $retval,
 		retcode => 0,
-		errormsg => undef,
+		errormsg => "",
 	};
 } # }}}
 
