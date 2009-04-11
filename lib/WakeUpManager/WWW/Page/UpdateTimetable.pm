@@ -140,7 +140,7 @@ sub get_header_elements () {
 	return {
 		h2 => $h2,
 
-		header_opt => "<script src=\"/ui/inc/UpdateTimetable.js\" type=\"text/javascript\"></script>",
+		header_opt => "<script src=\"inc/UpdateTimetable.js\" type=\"text/javascript\"></script>",
 	};
 }
 

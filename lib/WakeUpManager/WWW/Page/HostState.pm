@@ -90,7 +90,7 @@ sub get_header_elements () {
 	return {
 		h2 => $h2,
 
-		header_opt => "<script src=\"/ui/inc/HostState.js\" type=\"text/javascript\"></script>",
+		header_opt => "<script src=\"inc/HostState.js\" type=\"text/javascript\"></script>",
 	};
 }
 

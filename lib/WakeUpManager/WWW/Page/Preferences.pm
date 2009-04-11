@@ -113,7 +113,7 @@ sub get_header_elements () {
 		$h2 = 'Einstellungen';
 	}
 
-	return { header_opt => "<script src=\"/ui/inc/Preferences.js\" type=\"text/javascript\"></script>",
+	return { header_opt => "<script src=\"inc/Preferences.js\" type=\"text/javascript\"></script>",
 	         h2 => $h2,  };
 }
 

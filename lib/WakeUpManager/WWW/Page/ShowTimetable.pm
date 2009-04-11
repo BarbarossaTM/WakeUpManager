@@ -92,7 +92,7 @@ sub get_header_elements () {
 	return {
 		h2 => $h2,
 
-		header_opt => "<script src=\"/ui/inc/ShowTimetable.js\" type=\"text/javascript\"></script>",
+		header_opt => "<script src=\"inc/ShowTimetable.js\" type=\"text/javascript\"></script>",
 	};
 }
 
@@ -215,7 +215,7 @@ sub _show_timetable () {
 
 	my $times_list = WakeUpManager::Common::Utils::get_times_list ($boot_times);
 
-	my $result = "<img src=\"/ui/ajax/get_time_table_for_host_png?host_id=$host_id\" alt=\"\" usemap=\"#timetable\">\n";
+	my $result = "<img src=\"ajax/get_time_table_for_host_png?host_id=$host_id\" alt=\"\" usemap=\"#timetable\">\n";
 
 	if ($orientation eq 'vertical') {
 		$result .= $gl->get_timetable_vertical_map ($times_list, $host_id, $host_db_h->user_can_write_host_config ($user, $host_id));
